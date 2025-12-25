@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-import { Hero } from "@/components/Hero";
-import { Filters } from "@/components/Filters";
-import { EventCard } from "@/components/EventCard";
+import { Hero } from "@/app/components/Hero";
+import { Filters } from "@/app/components/Filters";
+import { EventCard } from "@/app/components/EventCard";
 import { useEvents } from "@/context/EventsContext";
 
 export default function Home() {
