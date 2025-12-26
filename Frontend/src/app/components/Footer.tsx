@@ -6,9 +6,12 @@ export function Footer() {
     const [backendStatus, setBackendStatus] = useState<string>("Checking...");
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/health")
-            .then(res => res.json())
-            .then(data => setBackendStatus(data.message))
+        // Use relative path so it goes through Next.js rewrite
+        fetch("/api/events")
+            .then(res => {
+                if (res.ok) setBackendStatus("System Online");
+                else setBackendStatus("Backend Connection Error");
+            })
             .catch(() => setBackendStatus("Backend Offline"));
     }, []);
 
