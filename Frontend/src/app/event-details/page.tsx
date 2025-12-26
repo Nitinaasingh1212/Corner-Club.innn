@@ -137,7 +137,7 @@ function EventContent() {
         );
     }
 
-    const startDateTime = new Date(event.date || event.createdAt); // Fallback
+    const startDateTime = new Date(event.date); // Fallback
     const isPending = event.status === 'pending';
     const isSoldOut = event.attendees >= event.capacity;
     const isPastEvent = new Date(event.date) < new Date();

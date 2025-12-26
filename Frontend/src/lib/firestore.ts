@@ -2,8 +2,8 @@ import { db } from "./firebase"; // Still needed for auth? No, auth is separate.
 // Actually, we should remove direct firestore usage.
 import { Event } from "@/data/mockData";
 
-// Use direct URL for robustness
-const API_URL = "http://localhost:5000/api";
+// Use relative URL to leverage Next.js rewrites (works in dev and prod)
+const API_URL = "/api";
 // const API_URL = "/api"; // Proxy requires frontend restart, so we use direct for now
 
 // We won't use this directly anymore for events, but might for other things if not fully migrated.

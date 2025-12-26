@@ -17,6 +17,7 @@ export interface Event {
     capacity: number;
     attendees: number;
     isSaved?: boolean;
+    status?: string;
 }
 
 export const MOCK_EVENTS: Event[] = [
