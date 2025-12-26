@@ -3,7 +3,8 @@ import { db } from "./firebase"; // Still needed for auth? No, auth is separate.
 import { Event } from "@/data/mockData";
 
 // Admin Panel API URL
-const API_URL = "http://localhost:5001/api";
+// Next.js rewrites will handle the proxy to Admin Backend
+const API_URL = "/api";
 // const API_URL = "/api"; // Proxy requires frontend restart, so we use direct for now
 
 // We won't use this directly anymore for events, but might for other things if not fully migrated.

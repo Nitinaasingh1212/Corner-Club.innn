@@ -19,6 +19,11 @@ export function Footer() {
         <footer className="mt-auto border-t border-zinc-100 bg-white dark:border-zinc-800 dark:bg-black">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-zinc-100 pt-8 dark:border-zinc-800 md:flex-row">
+                    <div className="flex gap-6 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                        <Link href="/" className="hover:text-black dark:hover:text-white">Home</Link>
+                        <Link href="/about" className="hover:text-black dark:hover:text-white">About</Link>
+                        <Link href="/contact" className="hover:text-black dark:hover:text-white">Contact</Link>
+                    </div>
                     <p className="text-sm text-zinc-500">
                         &copy; {new Date().getFullYear()} Corner Club. All rights reserved.
                     </p>
