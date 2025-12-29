@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.API_URL || 'http://localhost:5000';
+    const apiUrl = process.env.API_URL || 'https://corner-club-innn.onrender.com';
     return [
       {
         source: '/api/:path*',
