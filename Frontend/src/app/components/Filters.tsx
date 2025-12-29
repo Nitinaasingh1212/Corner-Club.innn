@@ -24,7 +24,7 @@ export function Filters({
 }: FiltersProps) {
 
     return (
-        <div className="space-y-6 py-8">
+        <div className="space-y-4 py-4 bg-white border-b border-zinc-100 -mx-4 px-4 sm:px-6 lg:px-8 mb-6">
             {/* Top Row: Search/City/Sort */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 {/* City Selector */}
@@ -74,8 +74,8 @@ export function Filters({
                         className={cn(
                             "whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all",
                             activeCategory === cat
-                                ? "bg-[#f98109] text-white shadow-md"
-                                : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                                ? "bg-[#f98109] text-white shadow-md font-semibold"
+                                : "bg-white border border-zinc-200 text-zinc-900 hover:bg-zinc-50 font-medium"
                         )}
                     >
                         {cat}

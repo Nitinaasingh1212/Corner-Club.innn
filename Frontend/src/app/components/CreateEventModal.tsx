@@ -16,25 +16,38 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     const { addEvent } = useEvents();
     const { user } = useAuth(); // Get logged in user
 
+    // ... imports
     const [formData, setFormData] = useState({
         title: "",
         city: "Lucknow",
         category: "Music",
         date: "",
         time: "",
-        location: "",
+        location: "", // Venue Name
+        address: "", // Specific Address
         description: "",
         capacity: "",
         price: "",
+        organizerName: user?.displayName || "",
+        organizerPhone: "",
+        socialInstagram: "",
+        socialFacebook: "",
+        socialYoutube: ""
     });
 
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const formRef = useRef<HTMLFormElement>(null);
 
+    // Update organizerName if user loads late
+    // useEffect(() => {
+    //     if (user?.displayName && !formData.organizerName) {
+    //         setFormData(prev => ({ ...prev, organizerName: user.displayName! }));
+    //     }
+    // }, [user]);
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Limit to ~500KB to prevent Firestore issues
             if (file.size > 500000) {
                 alert("Image must be less than 500KB for now.");
                 return;
@@ -51,8 +64,6 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Debug alert to confirm function is called
         console.log("Submitting form with data:", formData);
 
         const newEvent = {
@@ -65,10 +76,18 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
             attendees: 0,
             image: previewImage || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=1000",
             creator: {
-                name: user?.displayName || "Anonymous",
-                avatar: user?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous"
+                name: formData.organizerName || user?.displayName || "Anonymous",
+                avatar: user?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous",
+                phone: formData.organizerPhone,
+                social: {
+                    instagram: formData.socialInstagram,
+                    facebook: formData.socialFacebook,
+                    youtube: formData.socialYoutube
+                }
             },
-            isSaved: false
+            creatorId: user?.uid,
+            isSaved: false,
+            address: formData.address // Ensure address is top level for map
         };
 
         try {
@@ -82,9 +101,15 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                 date: "",
                 time: "",
                 location: "",
+                address: "",
                 description: "",
                 capacity: "",
                 price: "",
+                organizerName: user?.displayName || "",
+                organizerPhone: "",
+                socialInstagram: "",
+                socialFacebook: "",
+                socialYoutube: ""
             });
             setPreviewImage(null);
             alert("Event successfully submitted! It will be visible after Admin approval.");
@@ -199,18 +224,89 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Location</label>
-                                <div className="relative mt-1">
-                                    <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                            {/* Location Section */}
+                            <div className="space-y-4 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                                <h3 className="font-semibold text-zinc-900 dark:text-white">Location Details</h3>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Venue Name</label>
+                                    <div className="relative mt-1">
+                                        <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.location}
+                                            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                            placeholder="e.g. Phoenix Palassio"
+                                            className="h-10 w-full rounded-lg border border-zinc-300 pl-9 pr-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Full Address (for Map)</label>
                                     <input
                                         type="text"
                                         required
-                                        value={formData.location}
-                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        placeholder="Search for a venue..."
-                                        className="h-10 w-full rounded-lg border border-zinc-300 pl-9 pr-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                        placeholder="e.g. Sector-7, Gomti Nagar Extension"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
                                     />
+                                </div>
+                            </div>
+
+                            {/* Organizer Details */}
+                            <div className="space-y-4 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                                <h3 className="font-semibold text-zinc-900 dark:text-white">Organizer Details</h3>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Organizer Name</label>
+                                    <input
+                                        type="text"
+                                        value={formData.organizerName}
+                                        onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Phone Number (Optional)</label>
+                                    <input
+                                        type="tel"
+                                        value={formData.organizerPhone}
+                                        onChange={(e) => setFormData({ ...formData, organizerPhone: e.target.value })}
+                                        placeholder="+91..."
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-500">Instagram Handle</label>
+                                        <input
+                                            type="text"
+                                            value={formData.socialInstagram}
+                                            onChange={(e) => setFormData({ ...formData, socialInstagram: e.target.value })}
+                                            placeholder="@username"
+                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-500">Facebook URL</label>
+                                        <input
+                                            type="text"
+                                            value={formData.socialFacebook}
+                                            onChange={(e) => setFormData({ ...formData, socialFacebook: e.target.value })}
+                                            placeholder="facebook.com/..."
+                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-zinc-500">YouTube Channel</label>
+                                        <input
+                                            type="text"
+                                            value={formData.socialYoutube}
+                                            onChange={(e) => setFormData({ ...formData, socialYoutube: e.target.value })}
+                                            placeholder="youtube.com/..."
+                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

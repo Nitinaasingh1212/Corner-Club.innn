@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getUserBookings, getFavoriteEvents } from "@/lib/firestore";
+import { getUserBookings, getFavoriteEvents, getUserHostedEvents, getUserProfile, updateUserProfile } from "@/lib/firestore";
 import { Button } from "@/app/components/ui/Button";
 import { EventCard } from "@/app/components/EventCard";
-import { Settings, LogOut, Heart } from "lucide-react";
+import { Settings, LogOut, Heart, Clock, Image as ImageIcon, Trash2, Plus } from "lucide-react";
 
 export default function ProfilePage() {
     const { user, loading, logout } = useAuth();
@@ -15,6 +15,13 @@ export default function ProfilePage() {
     const [fetchingBookings, setFetchingBookings] = useState(true);
     const [savedEvents, setSavedEvents] = useState<any[]>([]);
     const [fetchingFavorites, setFetchingFavorites] = useState(true);
+    const [hostedEvents, setHostedEvents] = useState<any[]>([]);
+    const [fetchingHosted, setFetchingHosted] = useState(true);
+
+    // Portfolio State
+    const [portfolio, setPortfolio] = useState<string[]>([]);
+    const [newImage, setNewImage] = useState("");
+    const [updatingPortfolio, setUpdatingPortfolio] = useState(false);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -23,36 +30,59 @@ export default function ProfilePage() {
     }, [user, loading, router]);
 
     useEffect(() => {
-        async function fetchBookings() {
+        async function fetchData() {
             if (user) {
-                try {
-                    const data = await getUserBookings(user.uid);
-                    setBookings(data);
-                } catch (error) {
-                    console.error("Error fetching bookings:", error);
-                } finally {
-                    setFetchingBookings(false);
-                }
-            }
-        }
-        async function fetchFavorites() {
-            if (user) {
-                try {
-                    const data = await getFavoriteEvents(user.uid);
-                    setSavedEvents(data);
-                } catch (error) {
-                    console.error("Error fetching favorites:", error);
-                } finally {
-                    setFetchingFavorites(false);
-                }
-            }
-        }
+                // Bookings
+                getUserBookings(user.uid).then(setBookings).catch(console.error).finally(() => setFetchingBookings(false));
 
-        if (user) {
-            fetchBookings();
-            fetchFavorites();
+                // Favorites
+                getFavoriteEvents(user.uid).then(setSavedEvents).catch(console.error).finally(() => setFetchingFavorites(false));
+
+                // Hosted
+                getUserHostedEvents(user.uid).then(setHostedEvents).catch(console.error).finally(() => setFetchingHosted(false));
+
+                // Profile (Portfolio)
+                getUserProfile(user.uid).then(data => {
+                    if (data && data.portfolio) setPortfolio(data.portfolio);
+                }).catch(console.error);
+            }
         }
+        fetchData();
     }, [user]);
+
+    const handleAddImage = async () => {
+        if (!newImage.trim() || !user) return;
+
+        const updatedPortfolio = [...portfolio, newImage.trim()];
+        setPortfolio(updatedPortfolio);
+        setNewImage("");
+        setUpdatingPortfolio(true);
+
+        try {
+            await updateUserProfile(user.uid, { portfolio: updatedPortfolio });
+        } catch (error) {
+            console.error("Failed to update portfolio", error);
+            alert("Failed to save image.");
+        } finally {
+            setUpdatingPortfolio(false);
+        }
+    };
+
+    const handleDeleteImage = async (index: number) => {
+        if (!user) return;
+        const updatedPortfolio = portfolio.filter((_, i) => i !== index);
+        setPortfolio(updatedPortfolio);
+        setUpdatingPortfolio(true);
+
+        try {
+            await updateUserProfile(user.uid, { portfolio: updatedPortfolio });
+        } catch (error) {
+            console.error("Failed to update portfolio", error);
+            alert("Failed to delete image.");
+        } finally {
+            setUpdatingPortfolio(false);
+        }
+    };
 
     if (loading) return null; // or a spinner
     if (!user) return null; // redirecting
@@ -62,7 +92,7 @@ export default function ProfilePage() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
                 {/* Profile Header */}
-                <div className="rounded-2xl bg-white p-6 shadow-sm dark:bg-zinc-900 sm:p-10">
+                <div className="rounded-2xl bg-white p-6 shadow-sm dark:bg-zinc-900 sm:p-10 mb-8">
                     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-col items-center gap-4 sm:flex-row">
                             <img
@@ -83,6 +113,48 @@ export default function ProfilePage() {
                             </Button>
                         </div>
                     </div>
+                </div>
+
+                {/* Portfolio Section */}
+                <div className="mb-12 rounded-2xl bg-white p-6 shadow-sm dark:bg-zinc-900">
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                        <ImageIcon className="h-5 w-5 text-purple-500" />
+                        Organizer Portfolio
+                    </h2>
+                    <p className="text-sm text-zinc-500 mb-6">
+                        Upload photos of your past events to showcase your work on your event pages.
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                        {portfolio.map((img, idx) => (
+                            <div key={idx} className="relative aspect-square group rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                <img src={img} alt="Portfolio" className="h-full w-full object-cover" />
+                                <button
+                                    onClick={() => handleDeleteImage(idx)}
+                                    className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2 max-w-lg">
+                        <input
+                            type="text"
+                            value={newImage}
+                            onChange={(e) => setNewImage(e.target.value)}
+                            placeholder="Enter Image URL (e.g. from Unsplash)..."
+                            className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+                        />
+                        <Button onClick={handleAddImage} disabled={updatingPortfolio || !newImage.trim()}>
+                            {updatingPortfolio ? "Saving..." : <><Plus className="h-4 w-4 mr-1" /> Add</>}
+                        </Button>
+                    </div>
+                    {/* Helper text for demo */}
+                    <p className="text-xs text-zinc-400 mt-2">
+                        Tip: Open image in new tab, copy image address, and paste here.
+                    </p>
                 </div>
 
                 {/* Bookings Section */}
@@ -117,6 +189,49 @@ export default function ProfilePage() {
                             <p className="mt-2 text-zinc-500">You haven't booked any events yet.</p>
                             <Button className="mt-6" onClick={() => router.push("/")}>
                                 Explore Events
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Hosted Events Section */}
+                <div className="mt-12">
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white">Events Hosted by You</h2>
+
+                    {fetchingHosted ? (
+                        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-80 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800"></div>
+                            ))}
+                        </div>
+                    ) : hostedEvents.length > 0 ? (
+                        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                            {hostedEvents.map((event) => (
+                                <div key={event.id} className="relative">
+                                    <div className={`absolute left-4 top-3 z-20 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-sm ${event.status === 'approved' ? 'bg-green-500' : 'bg-yellow-500'
+                                        }`}>
+                                        {event.status === 'approved' ? 'Listed' : 'Pending Approval'}
+                                    </div>
+                                    {/* Disable clicking if pending */}
+                                    <div className={event.status !== 'approved' ? 'opacity-75 pointer-events-none' : ''}>
+                                        <EventCard event={event} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mt-12 flex flex-col items-center justify-center text-center">
+                            <div className="rounded-full bg-zinc-100 p-6 dark:bg-zinc-900">
+                                <Clock className="h-12 w-12 text-zinc-400" />
+                            </div>
+                            <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-white">No hosted events</h3>
+                            <p className="mt-2 text-zinc-500">You haven't hosted any events yet.</p>
+                            <Button className="mt-6" variant="outline" onClick={() => {
+                                // Trigger host event modal logic (need to pass this down or just redirect)
+                                // Simpler to redirect to home where the button is visible or just show text
+                                router.push("/");
+                            }}>
+                                Host an Event
                             </Button>
                         </div>
                     )}

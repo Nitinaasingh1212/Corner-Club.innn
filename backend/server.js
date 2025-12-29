@@ -111,11 +111,15 @@ app.get('/api/events/:id', async (req, res) => {
 // --- Bookings API ---
 
 // Create a booking
+// Create a booking
+// Create a booking
 app.post('/api/bookings', async (req, res) => {
+    console.log("RECEIVED BOOKING REQUEST:", req.body); // DEBUG LOG
     try {
         const { eventId, userId, userDetails, quantity } = req.body;
+        const { sendConfirmationEmail } = require('./emailService');
 
-        await runTransaction(db, async (transaction) => {
+        const bookingResult = await runTransaction(db, async (transaction) => {
             const eventRef = doc(db, "events", eventId);
             const eventDoc = await transaction.get(eventRef);
 
@@ -133,8 +137,10 @@ app.post('/api/bookings', async (req, res) => {
 
             // Create a booking reference
             const newBookingRef = doc(collection(db, "bookings"));
+            const bookingId = newBookingRef.id;
 
-            transaction.set(newBookingRef, {
+            const bookingData = {
+                id: bookingId,
                 eventId,
                 userId,
                 user: userDetails,
@@ -142,15 +148,34 @@ app.post('/api/bookings', async (req, res) => {
                 totalPrice: (eventData.price || 0) * (quantity || 1),
                 bookedAt: new Date().toISOString(),
                 status: "confirmed"
-            });
+            };
+
+            transaction.set(newBookingRef, bookingData);
 
             // Update event attendees count
             transaction.update(eventRef, {
                 attendees: currentAttendees + (quantity || 1)
             });
+
+            return { booking: bookingData, event: eventData };
         });
 
-        res.json({ success: true, message: "Booking successful" });
+        // Send Email Async (don't block response)
+        // Send Email Async (don't block response)
+        const fs = require('fs');
+        sendConfirmationEmail(userDetails.email, bookingResult.booking, bookingResult.event)
+            .then(success => {
+                const log = `${new Date().toISOString()} - SUCCESS - Sent to ${userDetails.email}\n`;
+                console.log(log);
+                fs.appendFileSync('email.log', log);
+            })
+            .catch(err => {
+                const log = `${new Date().toISOString()} - FAIL - ${userDetails.email} - ${err}\n`;
+                console.error("Email sending failed:", err);
+                fs.appendFileSync('email.log', log);
+            });
+
+        res.json({ success: true, message: "Booking successful", bookingId: bookingResult.booking.id });
     } catch (error) {
         console.error("Booking failed:", error);
         res.status(400).json({ error: error.toString() });
@@ -185,6 +210,73 @@ app.get('/api/users/:userId/bookings', async (req, res) => {
     } catch (error) {
         console.error("Error fetching bookings:", error);
         res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+});
+
+// Get user hosted events (Approved + Pending)
+app.get('/api/users/:userId/hosted-events', async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Query approved events
+        const eventsRef = collection(db, "events");
+        const qEvents = query(eventsRef, where("creatorId", "==", userId));
+        const snapEvents = await getDocs(qEvents);
+        const approvedEvents = snapEvents.docs.map(doc => ({ id: doc.id, ...doc.data(), status: 'approved' }));
+
+        // Query pending events
+        const pendingRef = collection(db, "pending_events");
+        const qPending = query(pendingRef, where("creatorId", "==", userId));
+        const snapPending = await getDocs(qPending);
+        const pendingEvents = snapPending.docs.map(doc => ({ id: doc.id, ...doc.data(), status: 'pending' }));
+
+        // Merge results
+        res.json([...approvedEvents, ...pendingEvents]);
+    } catch (error) {
+        console.error("Error fetching hosted events:", error);
+        res.status(500).json({ error: "Failed to fetch hosted events" });
+    }
+});
+
+// --- User & Organiser API ---
+
+// Get Event Attendees (Organizer Only)
+
+
+// Update User specific fields (Portfolio, Socials, Verification)
+// Using setDoc with merge: true to avoid overwriting everything
+app.post('/api/users/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const userData = req.body; // Expects { portfolio: [], social: {}, isVerified: bool, etc }
+
+        const userRef = doc(db, "users", userId);
+        await setDoc(userRef, userData, { merge: true });
+
+        res.json({ success: true, message: "User profile updated" });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).json({ error: "Failed to update user" });
+    }
+});
+
+// Get User Profile (Public)
+app.get('/api/users/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const userRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+            res.json({ id: userSnap.id, ...userSnap.data(), isVerified: true });
+        } else {
+            // User might exist in Auth but not in 'users' collection yet if they haven't saved extra data.
+            // Return minimal or empty but verified
+            res.json({ id: userId, isVerified: true });
+        }
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        res.status(500).json({ error: "Failed to fetch user" });
     }
 });
 

@@ -429,6 +429,6 @@ export const MOCK_EVENTS: Event[] = [
     }
 ];
 
-export const CITIES = ["Lucknow", "Mumbai", "Bangalore", "Pune", "Delhi", "Hyderabad", "Chennai"];
+export const CITIES = ["Lucknow"];
 
 export const CATEGORIES = ["All", "Music", "Food", "Comedy", "Fitness", "Art", "Tech", "Social"] as const;

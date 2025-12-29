@@ -23,9 +23,11 @@ export function ChatWidget() {
     const [newMessage, setNewMessage] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    const GLOBAL_CHAT_ID = "general_community";
+
     useEffect(() => {
         if (!isOpen) return;
-        const unsubscribe = subscribeToMessages((msgs) => {
+        const unsubscribe = subscribeToMessages(GLOBAL_CHAT_ID, (msgs) => {
             setMessages(msgs);
             // Auto scroll to bottom
             setTimeout(() => {
@@ -42,7 +44,7 @@ export function ChatWidget() {
         if (!newMessage.trim() || !user) return;
 
         try {
-            await sendMessage(newMessage, user);
+            await sendMessage(GLOBAL_CHAT_ID, newMessage, user);
             setNewMessage("");
             // Scroll to bottom immediately
             if (scrollRef.current) {
