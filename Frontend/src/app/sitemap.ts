@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetadataRoute } from 'next';
-import { getAllEvents } from '@/lib/firestore'; // Assuming getAllEvents handles fetching all events, if not I might need to adapt.
+import { getEventsOrderedByDate } from '@/lib/firestore'; // Assuming getAllEvents handles fetching all events, if not I might need to adapt.
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Base URL
@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // For sitemap we generally want everything.
     let events = [];
     try {
-        events = await getAllEvents();
+        events = await getEventsOrderedByDate();
     } catch (e) {
         console.error("Failed to fetch events for sitemap", e);
     }
