@@ -4,7 +4,10 @@ import { db } from "./firebase"; // Still needed for auth? No, auth is separate.
 import { Event } from "@/data/mockData";
 
 // Use relative URL to leverage Next.js rewrites (works in dev and prod)
-const API_URL = "/api";
+// Use relative URL for client-side (Next.js rewrites) and absolute URL for server-side (static generation/ISR)
+const API_URL = typeof window === "undefined"
+    ? "https://corner-club-innn.onrender.com/api"
+    : "/api";
 // const API_URL = "http://localhost:5000/api"; // DIRECT DEBUGGING
 
 // We won't use this directly anymore for events, but might for other things if not fully migrated.
