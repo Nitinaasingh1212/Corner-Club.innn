@@ -22,7 +22,7 @@ export default function AdminPage() {
 
     async function fetchPendingEvents() {
         try {
-            const res = await fetch("http://localhost:5000/api/admin/events/pending");
+            const res = await fetch("/api/admin/events/pending");
             if (res.ok) {
                 const data = await res.json();
                 setPendingEvents(data);
@@ -37,7 +37,7 @@ export default function AdminPage() {
     const handleApprove = async (id: string) => {
         if (!confirm("Approve this event?")) return;
         try {
-            await fetch(`http://localhost:5000/api/admin/events/${id}/approve`, { method: "POST" });
+            await fetch(`/api/admin/events/${id}/approve`, { method: "POST" });
             setPendingEvents(prev => prev.filter(e => e.id !== id));
             alert("Event approved!");
         } catch (error) {
@@ -48,7 +48,7 @@ export default function AdminPage() {
     const handleReject = async (id: string) => {
         if (!confirm("Reject and delete this event?")) return;
         try {
-            await fetch(`http://localhost:5000/api/admin/events/${id}/reject`, { method: "POST" });
+            await fetch(`/api/admin/events/${id}/reject`, { method: "POST" });
             setPendingEvents(prev => prev.filter(e => e.id !== id));
             alert("Event rejected!");
         } catch (error) {
