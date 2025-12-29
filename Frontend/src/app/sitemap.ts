@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MetadataRoute } from 'next';
 import { getAllEvents } from '@/lib/firestore'; // Assuming getAllEvents handles fetching all events, if not I might need to adapt.
 

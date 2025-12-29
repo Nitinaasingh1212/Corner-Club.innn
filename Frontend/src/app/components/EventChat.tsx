@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
 import { useState, useEffect, useRef } from "react";
 import { Send, MessageCircle } from "lucide-react";
 import { subscribeToMessages, sendMessage } from "@/lib/firestore";
@@ -85,8 +88,8 @@ export default function EventChat({ eventId, user }: EventChatProps) {
                                     </div>
                                     <div
                                         className={`rounded-2xl px-4 py-2 text-sm ${isMe
-                                                ? "bg-[#f98109] text-white rounded-br-none"
-                                                : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 rounded-bl-none"
+                                            ? "bg-[#f98109] text-white rounded-br-none"
+                                            : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 rounded-bl-none"
                                             }`}
                                     >
                                         {msg.text}

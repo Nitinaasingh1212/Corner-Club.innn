@@ -34,7 +34,7 @@ export default function AboutPage() {
                                 CornerClub was born from a simple idea: meaningful connections happen when people come together over shared interests. In a digital-first world, we are bringing the focus back to real-world interactions.
                             </p>
                             <p className="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                                Our platform isn't just about booking tickets. It's about bridging the gap between "going" and "belonging". With features like pre-event community chats, we ensure you never walk into a room of strangers.
+                                Our platform isn&apos;t just about booking tickets. It&apos;s about bridging the gap between &quot;going&quot; and &quot;belonging&quot;. With features like pre-event community chats, we ensure you never walk into a room of strangers.
                             </p>
                             <Button size="lg">Join our Community</Button>
                         </div>

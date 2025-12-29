@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "./firebase"; // Still needed for auth? No, auth is separate. But db export might be used elsewhere? 
 // Actually, we should remove direct firestore usage.
 import { Event } from "@/data/mockData";

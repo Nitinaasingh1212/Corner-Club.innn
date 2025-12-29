@@ -12,7 +12,7 @@ export default function ContactPage() {
                         Get in <span className="text-[#f98109]">Touch</span>
                     </h1>
                     <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-                        Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                        Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
                     </p>
                 </div>
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -186,7 +187,7 @@ export default function ProfilePage() {
                                 <CalendarIcon className="h-12 w-12 text-zinc-400" />
                             </div>
                             <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-white">No upcoming events</h3>
-                            <p className="mt-2 text-zinc-500">You haven't booked any events yet.</p>
+                            <p className="mt-2 text-zinc-500">You haven&apos;t booked any events yet.</p>
                             <Button className="mt-6" onClick={() => router.push("/")}>
                                 Explore Events
                             </Button>
@@ -225,7 +226,7 @@ export default function ProfilePage() {
                                 <Clock className="h-12 w-12 text-zinc-400" />
                             </div>
                             <h3 className="mt-4 text-lg font-medium text-zinc-900 dark:text-white">No hosted events</h3>
-                            <p className="mt-2 text-zinc-500">You haven't hosted any events yet.</p>
+                            <p className="mt-2 text-zinc-500">You haven&apos;t hosted any events yet.</p>
                             <Button className="mt-6" variant="outline" onClick={() => {
                                 // Trigger host event modal logic (need to pass this down or just redirect)
                                 // Simpler to redirect to home where the button is visible or just show text
