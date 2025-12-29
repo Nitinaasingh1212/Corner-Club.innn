@@ -47,6 +47,14 @@ export async function getEventsOrderedByDate() {
     return res.json();
 }
 
+export async function getEventsForSitemap() {
+    // Explicitly use the absolute URL for sitemap generation to avoid any environment ambiguity during build
+    // This runs in Node.js on the server where we need the full URL
+    const res = await fetch("https://corner-club-innn.onrender.com/api/events");
+    if (!res.ok) throw new Error("Failed to fetch events for sitemap");
+    return res.json();
+}
+
 export async function getEventById(id: string) {
     const res = await fetch(`${API_URL}/events/${id}`);
     if (res.status === 404) return null;
