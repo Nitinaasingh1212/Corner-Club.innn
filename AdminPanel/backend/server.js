@@ -141,6 +141,12 @@ app.get('/', (req, res) => {
     res.send('Admin Backend is running!');
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port: ${port}`);
-});
+// Export for Vercel
+module.exports = app;
+
+// Only start server if running locally
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`Server is running on port: ${port}`);
+    });
+}
