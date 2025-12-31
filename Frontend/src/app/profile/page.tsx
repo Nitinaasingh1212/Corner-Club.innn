@@ -24,6 +24,10 @@ export default function ProfilePage() {
     const [newImage, setNewImage] = useState("");
     const [updatingPortfolio, setUpdatingPortfolio] = useState(false);
 
+    // Profile Data State
+    const [profileData, setProfileData] = useState<any>({});
+    const [savingProfile, setSavingProfile] = useState(false);
+
     useEffect(() => {
         if (!loading && !user) {
             router.push("/");
@@ -42,14 +46,31 @@ export default function ProfilePage() {
                 // Hosted
                 getUserHostedEvents(user.uid).then(setHostedEvents).catch(console.error).finally(() => setFetchingHosted(false));
 
-                // Profile (Portfolio)
+                // Profile (Portfolio & Details)
                 getUserProfile(user.uid).then(data => {
-                    if (data && data.portfolio) setPortfolio(data.portfolio);
+                    if (data) {
+                        if (data.portfolio) setPortfolio(data.portfolio);
+                        setProfileData(data);
+                    }
                 }).catch(console.error);
             }
         }
         fetchData();
     }, [user]);
+
+    const handleSaveProfile = async () => {
+        if (!user) return;
+        setSavingProfile(true);
+        try {
+            await updateUserProfile(user.uid, profileData);
+            alert("Profile updated successfully!");
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            alert("Failed to update profile");
+        } finally {
+            setSavingProfile(false);
+        }
+    };
 
     const handleAddImage = async () => {
         if (!newImage.trim() || !user) return;
@@ -111,6 +132,48 @@ export default function ProfilePage() {
                         <div className="flex gap-3">
                             <Button variant="outline" onClick={logout}>
                                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Profile Editing Section */}
+                    <div className="mt-8 border-t border-zinc-100 dark:border-zinc-800 pt-6">
+                        <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Edit Profile</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Phone Number</label>
+                                <input
+                                    type="text"
+                                    value={profileData.phone || ""}
+                                    onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                    placeholder="+1 234 567 890"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">City</label>
+                                <input
+                                    type="text"
+                                    value={profileData.city || ""}
+                                    onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                    placeholder="New York, NY"
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Bio</label>
+                                <textarea
+                                    value={profileData.bio || ""}
+                                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                    rows={3}
+                                    placeholder="Tell us about yourself..."
+                                />
+                            </div>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <Button onClick={handleSaveProfile} disabled={savingProfile}>
+                                {savingProfile ? "Saving..." : "Save Changes"}
                             </Button>
                         </div>
                     </div>
