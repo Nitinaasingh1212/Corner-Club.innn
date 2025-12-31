@@ -19,6 +19,8 @@ export default function AdminPage() {
         fetchEvents();
     }, [activeTab]);
 
+    const [selectedOrganizer, setSelectedOrganizer] = useState<any>(null);
+
     async function fetchEvents() {
         setLoading(true);
         try {
@@ -124,6 +126,25 @@ export default function AdminPage() {
                                     </div>
                                     <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400 mb-6 flex-1">{event.description}</p>
 
+                                    <div className="mb-4 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-medium text-zinc-900 dark:text-zinc-200 mb-1">Organized by:</p>
+                                                <p className="truncate w-full">👤 {event.organizer?.name || 'Unknown'}</p>
+                                                <p className="truncate w-full">📞 {event.organizer?.phone || 'N/A'}</p>
+                                                <p className="truncate w-full">✉️ {event.organizer?.email || 'N/A'}</p>
+                                            </div>
+                                            {event.organizer && (
+                                                <button
+                                                    onClick={() => setSelectedOrganizer(event.organizer)}
+                                                    className="text-xs bg-zinc-900 text-white dark:bg-white dark:text-black px-2 py-1 rounded hover:opacity-80 transition-opacity"
+                                                >
+                                                    View Profile
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {activeTab === 'pending' ? (
                                         <div className="flex gap-3 mt-auto">
                                             <Button
@@ -153,6 +174,72 @@ export default function AdminPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Organizer Profile Modal */}
+                {selectedOrganizer && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedOrganizer(null)}>
+                        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl max-w-md w-full overflow-hidden" onClick={e => e.stopPropagation()}>
+                            <div className="relative h-32 bg-gradient-to-r from-blue-500 to-purple-600">
+                                <button
+                                    onClick={() => setSelectedOrganizer(null)}
+                                    className="absolute top-2 right-2 p-1.5 bg-black/20 hover:bg-black/40 rounded-full text-white transition-colors"
+                                >
+                                    ✕
+                                </button>
+                                <div className="absolute -bottom-10 left-6">
+                                    <div className="h-20 w-20 rounded-full border-4 border-white dark:border-zinc-900 bg-zinc-200 overflow-hidden">
+                                        <img
+                                            src={selectedOrganizer.photoURL || selectedOrganizer.photo || "https://api.dicebear.com/7.x/avataaars/svg"}
+                                            alt={selectedOrganizer.name}
+                                            className="h-full w-full object-cover"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="pt-12 px-6 pb-6">
+                                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{selectedOrganizer.name}</h2>
+                                <p className="text-sm text-zinc-500 mb-4">{selectedOrganizer.city || "No location set"}</p>
+
+                                <div className="space-y-3 mb-6">
+                                    <div className="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                        <span className="w-5 text-center">✉️</span>
+                                        <a href={`mailto:${selectedOrganizer.email}`} className="hover:text-blue-500">{selectedOrganizer.email}</a>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                        <span className="w-5 text-center">📞</span>
+                                        <span>{selectedOrganizer.phone || "No phone number"}</span>
+                                    </div>
+                                </div>
+
+                                {selectedOrganizer.bio && (
+                                    <div className="mb-6 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+                                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Bio</h3>
+                                        <p className="text-sm text-zinc-700 dark:text-zinc-300">{selectedOrganizer.bio}</p>
+                                    </div>
+                                )}
+
+                                {selectedOrganizer.social && Object.keys(selectedOrganizer.social).length > 0 && (
+                                    <div>
+                                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Social Links</h3>
+                                        <div className="flex gap-2">
+                                            {Object.entries(selectedOrganizer.social).map(([platform, link]: [string, any]) => (
+                                                <a
+                                                    key={platform}
+                                                    href={link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors capitalize"
+                                                >
+                                                    {platform}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

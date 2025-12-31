@@ -42,7 +42,36 @@ app.get('/api/admin/events/pending', async (req, res) => {
         const eventsCol = collection(db, "pending_events");
         const snapshot = await getDocs(eventsCol);
         const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        res.json(events);
+
+        // Enrich with Organizer Details
+        const enrichedEvents = await Promise.all(events.map(async (event) => {
+            if (event.creatorId) {
+                try {
+                    const userSnap = await getDoc(doc(db, "users", event.creatorId));
+                    if (userSnap.exists()) {
+                        const userData = userSnap.data();
+                        return {
+                            ...event,
+                            organizer: {
+                                ...userData,
+                                id: userSnap.id,
+                                name: userData.displayName || userData.name || "Unknown",
+                                email: userData.email || "N/A",
+                                phone: userData.phoneNumber || userData.phone || "N/A"
+                            }
+                        };
+                    }
+                } catch (e) {
+                    console.error(`Error fetching user ${event.creatorId} for event ${event.id}`, e);
+                }
+            }
+            return {
+                ...event,
+                organizer: null
+            };
+        }));
+
+        res.json(enrichedEvents);
     } catch (error) {
         console.error("Error fetching pending events:", error);
         res.status(500).json({ error: "Failed to fetch pending events" });
@@ -58,11 +87,39 @@ app.get('/api/admin/events/history', async (req, res) => {
         const approved = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const rejected = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const allHistory = [...approved, ...rejected]
+        let allHistory = [...approved, ...rejected]
             .filter(e => e.status !== 'pending') // Double check to exclude any legacy pending items in 'events'
             .sort((a, b) => new Date(b.approvedAt || b.rejectedAt || b.createdAt) - new Date(a.approvedAt || a.rejectedAt || a.createdAt));
 
-        res.json(allHistory);
+        // Enrich with Organizer Details
+        const enrichedHistory = await Promise.all(allHistory.map(async (event) => {
+            if (event.creatorId) {
+                try {
+                    const userSnap = await getDoc(doc(db, "users", event.creatorId));
+                    if (userSnap.exists()) {
+                        const userData = userSnap.data();
+                        return {
+                            ...event,
+                            organizer: {
+                                ...userData,
+                                id: userSnap.id,
+                                name: userData.displayName || userData.name || "Unknown",
+                                email: userData.email || "N/A",
+                                phone: userData.phoneNumber || userData.phone || "N/A"
+                            }
+                        };
+                    }
+                } catch (e) {
+                    console.error(`Error fetching user ${event.creatorId} for event ${event.id}`, e);
+                }
+            }
+            return {
+                ...event,
+                organizer: null
+            };
+        }));
+
+        res.json(enrichedHistory);
     } catch (error) {
         console.error("Error fetching history:", error);
         res.status(500).json({ error: "Failed to fetch history" });
