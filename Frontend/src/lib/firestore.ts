@@ -6,7 +6,7 @@ import { Event } from "@/data/mockData";
 // Use relative URL to leverage Next.js rewrites (works in dev and prod)
 // Use relative URL for client-side (Next.js rewrites) and absolute URL for server-side (static generation/ISR)
 const API_URL = typeof window === "undefined"
-    ? "https://corner-club-innn.onrender.com/api"
+    ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api")
     : "/api";
 // const API_URL = "http://localhost:5000/api"; // DIRECT DEBUGGING
 
@@ -50,7 +50,7 @@ export async function getEventsOrderedByDate() {
 export async function getEventsForSitemap() {
     // Explicitly use the absolute URL for sitemap generation to avoid any environment ambiguity during build
     // This runs in Node.js on the server where we need the full URL
-    const res = await fetch("https://corner-club-innn.onrender.com/api/events");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/events`);
     if (!res.ok) throw new Error("Failed to fetch events for sitemap");
     return res.json();
 }

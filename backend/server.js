@@ -103,10 +103,104 @@ app.get('/api/events/:id', async (req, res) => {
 // --- Admin API ---
 
 // --- Admin API ---
-// Moved to separate Admin Panel Backend
-// app.get('/api/admin/events/pending', ...);
-// app.post('/api/admin/events/:id/approve', ...);
-// app.post('/api/admin/events/:id/reject', ...);
+
+// --- Admin API ---
+
+// Get pending events
+app.get('/api/admin/events/pending', async (req, res) => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "pending_events"));
+        const events = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Sort in memory or use query orderBy if index exists. 
+        // AdminPanel used memory sort for history, let's stick to simple getDocs for pending unless volume is huge.
+        res.json(events);
+    } catch (error) {
+        console.error("Error fetching pending events:", error);
+        res.status(500).json({ error: "Failed to fetch pending events" });
+    }
+});
+
+// Get event history (Approved + Rejected)
+app.get('/api/admin/events/history', async (req, res) => {
+    try {
+        const approvedSnap = await getDocs(collection(db, "events"));
+        const rejectedSnap = await getDocs(collection(db, "rejected_events"));
+
+        const approved = approvedSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), status: 'approved' }));
+        const rejected = rejectedSnap.docs.map(doc => ({ id: doc.id, ...doc.data(), status: 'rejected' }));
+
+        const allHistory = [...approved, ...rejected]
+            .filter(e => e.status !== 'pending')
+            .sort((a, b) => new Date(b.approvedAt || b.rejectedAt || b.createdAt) - new Date(a.approvedAt || a.rejectedAt || a.createdAt));
+
+        res.json(allHistory);
+    } catch (error) {
+        console.error("Error fetching history:", error);
+        res.status(500).json({ error: "Failed to fetch history" });
+    }
+});
+
+// Approve event (Transaction: Pending -> Events)
+app.post('/api/admin/events/:id/approve', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pendingRef = doc(db, "pending_events", id);
+        const approvedRef = doc(db, "events", id);
+
+        await runTransaction(db, async (transaction) => {
+            const sfDoc = await transaction.get(pendingRef);
+            if (!sfDoc.exists()) {
+                throw "Document does not exist in pending!";
+            }
+
+            const data = sfDoc.data();
+            const newData = {
+                ...data,
+                status: 'approved',
+                approvedAt: new Date().toISOString()
+            };
+
+            transaction.set(approvedRef, newData);
+            transaction.delete(pendingRef);
+        });
+
+        res.json({ success: true, message: "Event approved" });
+    } catch (error) {
+        console.error("Error approving event:", error);
+        res.status(500).json({ error: "Failed to approve event" });
+    }
+});
+
+// Reject event (Transaction: Pending -> Rejected Events)
+app.post('/api/admin/events/:id/reject', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pendingRef = doc(db, "pending_events", id);
+        const rejectedRef = doc(db, "rejected_events", id);
+
+        await runTransaction(db, async (transaction) => {
+            const sfDoc = await transaction.get(pendingRef);
+            if (!sfDoc.exists()) {
+                throw "Document does not exist in pending!";
+            }
+
+            const data = sfDoc.data();
+            const newData = {
+                ...data,
+                status: 'rejected',
+                rejectedAt: new Date().toISOString()
+            };
+
+            transaction.set(rejectedRef, newData);
+            transaction.delete(pendingRef);
+        });
+
+        res.json({ success: true, message: "Event rejected" });
+    } catch (error) {
+        console.error("Error rejecting event:", error);
+        res.status(500).json({ error: "Failed to reject event" });
+    }
+});
 
 // --- Bookings API ---
 

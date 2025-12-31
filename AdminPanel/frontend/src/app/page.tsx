@@ -12,7 +12,7 @@ export default function AdminPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const API_BASE = "http://localhost:5001/api";
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
     useEffect(() => {
         // In real app maybe check user here
@@ -98,10 +98,10 @@ export default function AdminPage() {
                         {events.map((event) => (
                             <div key={event.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/50">
                                 <div className={`absolute top-3 right-3 z-10 rounded-full px-3 py-1 text-xs font-semibold ${event.status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                        event.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    event.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                                     }`}>
-                                    {event.status === 'pending' ? 'Pending Review' : event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                    {event.status === 'pending' ? 'Pending Review' : (event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 'Unknown')}
                                 </div>
 
                                 <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100 relative">
