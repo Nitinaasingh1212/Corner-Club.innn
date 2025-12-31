@@ -283,12 +283,6 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
 
                                     {/* Socials & Contact */}
                                     <div className="flex flex-wrap gap-4 mt-3">
-                                        {creatorInfo.phone && (
-                                            <div className="flex items-center gap-1 text-sm text-zinc-600 dark:text-zinc-400">
-                                                <Phone className="h-3.5 w-3.5" />
-                                                <span>{creatorInfo.phone}</span>
-                                            </div>
-                                        )}
                                         {creatorInfo.social?.instagram && (
                                             <a href={`https://instagram.com/${creatorInfo.social.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:opacity-80">
                                                 <Instagram className="h-5 w-5" />
