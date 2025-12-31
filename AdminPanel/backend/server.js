@@ -8,18 +8,12 @@ const app = express();
 const port = process.env.PORT || 5001;
 
 // Allow both localhost:3000 (Main) and localhost:3001 (Admin) just in case
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+// Allow both localhost and production Vercel apps
+const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://corner-club-admin-frontend.vercel.app']; // Add your production domains here or use wildcard below
+
 
 app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified turn.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
+    origin: true, // Allow all origins for debug/production simplicity (Or specify allowedOrigins)
     credentials: true
 }));
 
