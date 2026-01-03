@@ -56,17 +56,7 @@ export default function Home() {
           )}
         </div>
 
-        {hasMore && !savedOnly && (
-          <div className="mt-12 flex justify-center">
-            <button
-              onClick={() => loadMore()}
-              disabled={loading}
-              className="rounded-full border border-zinc-200 bg-white px-8 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 disabled:opacity-50"
-            >
-              Load More Events
-            </button>
-          </div>
-        )}
+
 
 
       </div>
