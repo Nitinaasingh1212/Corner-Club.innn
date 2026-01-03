@@ -94,7 +94,7 @@ export function EventCard({ event }: EventCardProps) {
             <div className="flex flex-1 flex-col p-4">
                 {/* Date & Location */}
                 <div className="mb-2 flex items-center gap-3 text-xs font-medium text-[#f98109]">
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1" suppressHydrationWarning>
                         <Calendar className="h-3.5 w-3.5" />
                         {new Date(event.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", weekday: 'short' })} • {event.time}
                     </span>
