@@ -41,8 +41,19 @@ export async function createEvent(data: Event) {
     return res.json();
 }
 
-export async function getEventsOrderedByDate() {
-    const res = await fetch(`${API_URL}/events`);
+export async function getEventsOrderedByDate(
+    lastDate?: string,
+    lastId?: string,
+    city?: string,
+    category?: string
+) {
+    const params = new URLSearchParams();
+    if (lastDate) params.append("lastDate", lastDate);
+    if (lastId) params.append("lastId", lastId);
+    if (city && city !== "All") params.append("city", city);
+    if (category && category !== "All") params.append("category", category);
+
+    const res = await fetch(`${API_URL}/events?${params.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch events");
     return res.json();
 }
@@ -128,7 +139,7 @@ export function subscribeToMessages(eventId: string, callback: (messages: any[])
 
 // ATTENDEES (Organizer Only)
 export async function getEventAttendees(eventId: string) {
-    const res = await fetch(`${API_URL}/events/${eventId}/attendees`);
+    const res = await fetch(`${API_URL}/events/${eventId}/bookings`);
     if (!res.ok) throw new Error("Failed to fetch attendees");
     return res.json();
 }

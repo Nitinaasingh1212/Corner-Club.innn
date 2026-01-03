@@ -7,7 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 import { getUserBookings, getFavoriteEvents, getUserHostedEvents, getUserProfile, updateUserProfile } from "@/lib/firestore";
 import { Button } from "@/app/components/ui/Button";
 import { EventCard } from "@/app/components/EventCard";
-import { Settings, LogOut, Heart, Clock, Image as ImageIcon, Trash2, Plus } from "lucide-react";
+import { Settings, LogOut, Heart, Clock, Image as ImageIcon, Trash2, Plus, Users } from "lucide-react";
+import { AttendeeModal } from "@/app/components/AttendeeModal";
 
 export default function ProfilePage() {
     const { user, loading, logout } = useAuth();
@@ -26,7 +27,11 @@ export default function ProfilePage() {
 
     // Profile Data State
     const [profileData, setProfileData] = useState<any>({});
+
     const [savingProfile, setSavingProfile] = useState(false);
+
+    // Attendee Modal State
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -280,6 +285,16 @@ export default function ProfilePage() {
                                     <div className={event.status !== 'approved' ? 'opacity-75 pointer-events-none' : ''}>
                                         <EventCard event={event} />
                                     </div>
+                                    <div className="mt-2">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full text-zinc-600 dark:text-zinc-300 border-dashed"
+                                            onClick={() => setSelectedEventId(event.id)}
+                                        >
+                                            <Users className="mr-2 h-4 w-4" />
+                                            View Attendees
+                                        </Button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -331,6 +346,12 @@ export default function ProfilePage() {
                     )}
                 </div>
             </div>
+            {selectedEventId && (
+                <AttendeeModal
+                    eventId={selectedEventId}
+                    onClose={() => setSelectedEventId(null)}
+                />
+            )}
         </div>
     );
 }

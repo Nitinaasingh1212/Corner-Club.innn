@@ -8,6 +8,10 @@ import { Event } from "@/data/mockData"; // keep type definition
 interface EventsContextType {
     events: Event[];
     addEvent: (event: Event) => void;
+    loadMore: () => Promise<void>;
+    hasMore: boolean;
+    loading: boolean;
+    refetch: (city: string, category: string) => Promise<void>;
 }
 
 const EventsContext = createContext<EventsContextType | undefined>(undefined);
@@ -15,43 +19,69 @@ const EventsContext = createContext<EventsContextType | undefined>(undefined);
 export function EventsProvider({ children }: { children: ReactNode }) {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [filters, setFilters] = useState({ city: "All", category: "All" });
 
-    // Load events from Firestore on mount
-    useEffect(() => {
-        async function fetchEvents() {
-            setLoading(true);
-            try {
-                // Check if we need to seed data (e.g. if it's the first run)
-                // In a real app, this might be a separate admin script, 
-                // but for this demo request we'll do it here to ensure data exists.
-                const { seedEvents } = await import("@/utils/seedEvents");
-                await seedEvents();
+    // Helper to fetch events
+    const fetchEventsList = async (isLoadMore: boolean = false, city: string = "All", category: string = "All") => {
+        setLoading(true);
+        try {
+            let lastDate = undefined;
+            let lastId = undefined;
 
-                const data = await getEventsOrderedByDate();
-
-                if (data.length === 0) {
-                    console.warn("Firestore returned 0 events. Using mock data.");
-                    const { MOCK_EVENTS } = await import("@/data/mockData");
-                    setEvents(MOCK_EVENTS);
-
-                    // Auto-seed the database so it's not empty next time
-                    const { seedEvents } = await import("@/utils/seedEvents");
-                    await seedEvents();
-                } else {
-                    setEvents(data as Event[]);
-                }
-            } catch (err) {
-                console.error("Failed to fetch events:", err);
-                console.warn("Falling back to local mock data due to error.");
-                // Fallback to local data so the app isn't empty
-                const { MOCK_EVENTS } = await import("@/data/mockData");
-                setEvents(MOCK_EVENTS);
-            } finally {
-                setLoading(false);
+            if (isLoadMore && events.length > 0) {
+                const lastEvent = events[events.length - 1];
+                lastDate = lastEvent.date;
+                lastId = lastEvent.id;
             }
+
+            const newEvents: any[] = await getEventsOrderedByDate(lastDate, lastId, city, category);
+
+            if (newEvents.length < 50) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
+
+            if (isLoadMore) {
+                setEvents(prev => [...prev, ...newEvents]);
+            } else {
+                setEvents(newEvents);
+            }
+        } catch (err) {
+            console.error("Failed to fetch events:", err);
+        } finally {
+            setLoading(false);
         }
-        fetchEvents();
+    };
+
+    // Initial load
+    useEffect(() => {
+        // fetchEventsList(false, "All", "All"); 
+        // We can let the component trigger the first fetch via refetch if we want, or do it here.
+        // Let's do it here to ensure data on mount, but page.tsx might override.
+        // Actually page.tsx has local state 'Lucknow'/'All'. 
+        // It's better if page.tsx calls refetch on mount with its defaults.
+        // But if we leave it empty here, context is empty initially.
+        // Let's fetch default "All"/"All" here (or "Lucknow" if that's the desired default? 
+        // The mock local state in page.tsx was "Lucknow".
+        // Let's hold off auto-fetch here if we want page.tsx to drive it.
+        // Or better: default to fetching All/All and let page.tsx refine it.
+        // existing: fetches all.
+        // I will trigger a default fetch here.
+        fetchEventsList();
     }, []);
+
+    const loadMore = async () => {
+        if (!hasMore || loading) return;
+        await fetchEventsList(true, filters.city, filters.category);
+    };
+
+    const refetch = async (city: string, category: string) => {
+        setFilters({ city, category });
+        setHasMore(true); // Reset hasMore on new filter
+        await fetchEventsList(false, city, category);
+    };
 
     const addEvent = async (event: Event) => {
         // Do NOT optimistic update, because event needs approval.
@@ -67,7 +97,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <EventsContext.Provider value={{ events, addEvent }}>
+        <EventsContext.Provider value={{ events, addEvent, loadMore, hasMore, loading, refetch }}>
             {children}
         </EventsContext.Provider>
     );

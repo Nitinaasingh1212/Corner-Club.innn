@@ -20,31 +20,10 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         async function fetchEvents() {
             setLoading(true);
             try {
-                // Check if we need to seed data (e.g. if it's the first run)
-                // In a real app, this might be a separate admin script, 
-                // but for this demo request we'll do it here to ensure data exists.
-                const { seedEvents } = await import("@/utils/seedEvents");
-                await seedEvents();
-
                 const data = await getEventsOrderedByDate();
-
-                if (data.length === 0) {
-                    console.warn("Firestore returned 0 events. Using mock data.");
-                    const { MOCK_EVENTS } = await import("@/data/mockData");
-                    setEvents(MOCK_EVENTS);
-
-                    // Auto-seed the database so it's not empty next time
-                    const { seedEvents } = await import("@/utils/seedEvents");
-                    await seedEvents();
-                } else {
-                    setEvents(data as Event[]);
-                }
+                setEvents(data as Event[]);
             } catch (err) {
                 console.error("Failed to fetch events:", err);
-                console.warn("Falling back to local mock data due to error.");
-                // Fallback to local data so the app isn't empty
-                const { MOCK_EVENTS } = await import("@/data/mockData");
-                setEvents(MOCK_EVENTS);
             } finally {
                 setLoading(false);
             }

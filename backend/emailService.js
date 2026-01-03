@@ -84,3 +84,57 @@ const sendConfirmationEmail = async (toEmail, bookingDetails, eventDetails) => {
 };
 
 module.exports = { sendConfirmationEmail };
+
+/**
+ * Sends a booking notification to the Organizer and Admin
+ * @param {string} organizerEmail 
+ * @param {string} adminEmail 
+ * @param {object} bookingDetails 
+ * @param {object} eventDetails 
+ */
+const sendBookingNotification = async (organizerEmail, adminEmail, bookingDetails, eventDetails) => {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.warn("Email credentials missing. Skipping notification email.");
+        return;
+    }
+
+    const recipients = [organizerEmail, adminEmail].filter(Boolean).join(',');
+
+    const mailOptions = {
+        from: '"CornerClub Events" <' + process.env.EMAIL_USER + '>',
+        to: recipients,
+        subject: `New Booking: ${eventDetails.title}`,
+        html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #f98109; color: #fff; padding: 20px; text-align: center;">
+                    <h1>New Ticket Sold!</h1>
+                </div>
+                <div style="padding: 20px;">
+                    <p><strong>Event:</strong> ${eventDetails.title}</p>
+                    <p><strong>Date:</strong> ${new Date(eventDetails.date).toDateString()}</p>
+                    
+                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <h3>Attendee Details</h3>
+                        <p><strong>Name:</strong> ${bookingDetails.user.name}</p>
+                        <p><strong>Phone:</strong> ${bookingDetails.user.phone}</p>
+                        <p><strong>Quantity:</strong> ${bookingDetails.quantity}</p>
+                        <p><strong>Total Paid:</strong> ₹${bookingDetails.totalPrice}</p>
+                    </div>
+
+                    <p style="font-size: 12px; color: #777;">Booking ID: ${bookingDetails.id}</p>
+                </div>
+            </div>
+        `
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Notification Email sent: ' + info.response);
+        return true;
+    } catch (error) {
+        console.error('Error sending notification email:', error);
+        return false;
+    }
+};
+
+module.exports = { sendConfirmationEmail, sendBookingNotification };

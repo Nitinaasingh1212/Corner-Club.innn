@@ -10,6 +10,7 @@ export default function AdminPage() {
     const router = useRouter();
     const [pendingEvents, setPendingEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
         if (!user) {
@@ -21,12 +22,31 @@ export default function AdminPage() {
 
     const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
-    async function fetchPendingEvents() {
+    async function fetchPendingEvents(isLoadMore: boolean = false) {
+        setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/admin/events/pending`);
+            const params = new URLSearchParams();
+            if (isLoadMore && pendingEvents.length > 0) {
+                const lastEvent = pendingEvents[pendingEvents.length - 1];
+                if (lastEvent.createdAt) params.append("lastCreatedAt", lastEvent.createdAt);
+                if (lastEvent.id) params.append("lastId", lastEvent.id);
+            }
+
+            const res = await fetch(`${API_BASE}/admin/events/pending?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
-                setPendingEvents(data);
+
+                if (data.length < 50) {
+                    setHasMore(false);
+                } else {
+                    setHasMore(true);
+                }
+
+                if (isLoadMore) {
+                    setPendingEvents(prev => [...prev, ...data]);
+                } else {
+                    setPendingEvents(data);
+                }
             }
         } catch (error) {
             console.error("Error fetching pending events:", error);
@@ -124,8 +144,23 @@ export default function AdminPage() {
                             </div>
                         ))}
                     </div>
-                )}
+                ))}
             </div>
+                )}
+
+            {hasMore && pendingEvents.length > 0 && (
+                <div className="flex justify-center mt-12">
+                    <Button
+                        variant="outline"
+                        onClick={() => fetchPendingEvents(true)}
+                        disabled={loading}
+                        className="bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                    >
+                        {loading ? "Loading..." : "Load More Events"}
+                    </Button>
+                </div>
+            )}
         </div>
+        </div >
     );
 }

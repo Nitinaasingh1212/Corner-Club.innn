@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const { db } = require('./firebase');
-const { collection, getDocs, doc, getDoc, setDoc, updateDoc, runTransaction, query, where, orderBy, deleteDoc, serverTimestamp } = require("firebase/firestore");
+const { collection, getDocs, doc, getDoc, setDoc, updateDoc, runTransaction, query, where, orderBy, deleteDoc, serverTimestamp, limit, startAfter } = require("firebase/firestore");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,20 +22,39 @@ app.use((req, res, next) => {
 // Get all approved events (ordered by date)
 app.get('/api/events', async (req, res) => {
     try {
+        const { limit: limitParam, lastDate, lastId, city, category } = req.query;
+        const limitVal = parseInt(limitParam) || 50;
         const eventsCol = collection(db, "events");
-        // Note: Firestore requires a composite index for where() + orderBy().
-        // To avoid making you create an index manually, we'll sort in memory.
-        const q = query(eventsCol, where("status", "==", "approved"));
+
+        // Base constraints: only approved events
+        const constraints = [where("status", "==", "approved")];
+
+        // Add filters
+        if (city && city !== "All") constraints.push(where("city", "==", city));
+        if (category && category !== "All") constraints.push(where("category", "==", category));
+
+        // Sorting
+        // Note: Firestore requires an index for where() + orderBy().
+        // User must create the index link shown in server console if it fails.
+        // We order by date desc, then ID desc for stable pagination.
+        constraints.push(orderBy("date", "desc"));
+        constraints.push(orderBy("__name__", "desc"));
+
+        // Pagination Cursor
+        if (lastDate && lastId) {
+            constraints.push(startAfter(lastDate, lastId));
+        }
+
+        constraints.push(limit(limitVal));
+
+        const q = query(eventsCol, ...constraints);
         const snapshot = await getDocs(q);
         const events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-        // Sort in memory
-        events.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         res.json(events);
     } catch (error) {
         console.error("Error fetching events:", error);
-        res.status(500).json({ error: "Failed to fetch events" });
+        res.status(500).json({ error: "Failed to fetch events. Ensure Firestore indexes are created." });
     }
 });
 
@@ -109,10 +128,26 @@ app.get('/api/events/:id', async (req, res) => {
 // Get pending events
 app.get('/api/admin/events/pending', async (req, res) => {
     try {
-        const querySnapshot = await getDocs(collection(db, "pending_events"));
+        const { limit: limitParam, lastCreatedAt, lastId } = req.query;
+        const limitVal = parseInt(limitParam) || 50;
+        const pendingCol = collection(db, "pending_events");
+
+        const constraints = [];
+
+        // Sort by creation time usually
+        constraints.push(orderBy("createdAt", "desc"));
+        constraints.push(orderBy("__name__", "desc"));
+
+        if (lastCreatedAt && lastId) {
+            constraints.push(startAfter(lastCreatedAt, lastId));
+        }
+
+        constraints.push(limit(limitVal));
+
+        const q = query(pendingCol, ...constraints);
+        const querySnapshot = await getDocs(q);
         const events = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Sort in memory or use query orderBy if index exists. 
-        // AdminPanel used memory sort for history, let's stick to simple getDocs for pending unless volume is huge.
+
         res.json(events);
     } catch (error) {
         console.error("Error fetching pending events:", error);
@@ -211,17 +246,21 @@ app.post('/api/bookings', async (req, res) => {
     console.log("RECEIVED BOOKING REQUEST:", req.body); // DEBUG LOG
     try {
         const { eventId, userId, userDetails, quantity } = req.body;
-        const { sendConfirmationEmail } = require('./emailService');
+        const { sendConfirmationEmail, sendBookingNotification } = require('./emailService');
 
         const bookingResult = await runTransaction(db, async (transaction) => {
             const eventRef = doc(db, "events", eventId);
             const eventDoc = await transaction.get(eventRef);
 
-            if (!eventDoc.exists()) {
+            // If not found in active events, check pending (though normally you don't book pending events, 
+            // but for safety or draft flows)
+            let eventData, refToUse;
+            if (eventDoc.exists()) {
+                eventData = eventDoc.data();
+                refToUse = eventRef;
+            } else {
                 throw "Event does not exist!";
             }
-
-            const eventData = eventDoc.data();
             const currentAttendees = eventData.attendees || 0;
             const capacity = eventData.capacity || 0;
 
@@ -269,10 +308,57 @@ app.post('/api/bookings', async (req, res) => {
                 fs.appendFileSync('email.log', log);
             });
 
+        // Notify Organizer & Admin
+        // Fetch Organizer Email first
+        const organizerRef = doc(db, "users", bookingResult.event.creatorId); // Assuming creatorId links to 'users'
+        // If creatorId points to a user that might not have an email in 'users' doc (only auth), this is tricky.
+        // Assuming 'users' doc has email, or we rely on 'creatorId' being an email (unlikely).
+        // Let's try to fetch user doc.
+        getDoc(organizerRef).then(orgSnap => {
+            const orgData = orgSnap.exists() ? orgSnap.data() : {};
+            const organizerEmail = orgData.email; // Ensure your users collection has email!
+            const adminEmail = process.env.EMAIL_USER; // Sent to site owner
+
+            if (organizerEmail || adminEmail) {
+                sendBookingNotification(organizerEmail, adminEmail, bookingResult.booking, bookingResult.event);
+            }
+        });
+
         res.json({ success: true, message: "Booking successful", bookingId: bookingResult.booking.id });
     } catch (error) {
         console.error("Booking failed:", error);
         res.status(400).json({ error: error.toString() });
+    }
+});
+});
+
+// Get attendees for an event (Organizer/Admin only)
+app.get('/api/events/:eventId/bookings', async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const bookingsRef = collection(db, "bookings");
+        const q = query(bookingsRef, where("eventId", "==", eventId));
+        const snapshot = await getDocs(q);
+
+        const attendees = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                user: {
+                    name: data.user?.name || "Anonymous",
+                    phone: data.user?.phone || "N/A",
+                    email: data.user?.email || "N/A"
+                },
+                quantity: data.quantity,
+                totalPrice: data.totalPrice,
+                bookedAt: data.bookedAt
+            };
+        });
+
+        res.json(attendees);
+    } catch (error) {
+        console.error("Error fetching attendees:", error);
+        res.status(500).json({ error: "Failed to fetch attendees" });
     }
 });
 

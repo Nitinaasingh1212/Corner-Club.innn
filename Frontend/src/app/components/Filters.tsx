@@ -1,7 +1,7 @@
 "use client";
 
 
-import { CITIES, CATEGORIES } from "@/data/mockData";
+import { CITIES, CATEGORIES } from "@/data/constants";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, MapPin } from "lucide-react";
 
