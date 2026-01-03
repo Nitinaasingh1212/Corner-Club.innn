@@ -13,7 +13,7 @@ export function Header({ onCreateClick }: HeaderProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-black/80">
+        <header className="sticky top-0 z-[100] w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-black/80">
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2">
@@ -47,11 +47,7 @@ export function Header({ onCreateClick }: HeaderProps) {
                             />
                         </Link>
                     ) : (
-                        <Button variant="ghost" size="sm" onClick={() => {
-                            alert("Login Clicked! If you see this, the button works.");
-                            console.log("Login button clicked");
-                            signInWithGoogle().catch(e => alert("Auth Error: " + e.message));
-                        }}>Login</Button>
+                        <Button variant="ghost" size="sm" onClick={signInWithGoogle}>Login</Button>
                     )}
 
                     <Button size="sm" className="hidden sm:flex gap-2" onClick={() => {
