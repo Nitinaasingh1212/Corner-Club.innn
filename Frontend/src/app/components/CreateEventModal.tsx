@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Upload, MapPin } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useEvents } from "@/context/EventsContext";
 import { useAuth } from "@/context/AuthContext";
+import { getUserProfile } from "@/lib/firestore";
+import { type Event } from "@/types";
 
 interface CreateEventModalProps {
     isOpen: boolean;
@@ -16,6 +18,7 @@ interface CreateEventModalProps {
 export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     const { addEvent } = useEvents();
     const { user } = useAuth(); // Get logged in user
+    const [loading, setLoading] = useState(false);
 
     // ... imports
     const [formData, setFormData] = useState({
