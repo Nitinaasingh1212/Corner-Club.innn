@@ -268,6 +268,10 @@ app.post('/api/bookings', async (req, res) => {
                 throw `Not enough spots! Only ${capacity - currentAttendees} left.`;
             }
 
+            // Calculate Seat Numbers
+            const startSeat = currentAttendees + 1;
+            const seatNumbers = Array.from({ length: quantity || 1 }, (_, i) => `#${startSeat + i}`);
+
             // Create a booking reference
             const newBookingRef = doc(collection(db, "bookings"));
             const bookingId = newBookingRef.id;
@@ -278,6 +282,7 @@ app.post('/api/bookings', async (req, res) => {
                 userId,
                 user: userDetails,
                 quantity: quantity || 1,
+                seatNumbers, // Store assigned seats
                 totalPrice: (eventData.price || 0) * (quantity || 1),
                 bookedAt: new Date().toISOString(),
                 status: "confirmed"
@@ -320,7 +325,17 @@ app.post('/api/bookings', async (req, res) => {
             const adminEmail = process.env.EMAIL_USER; // Sent to site owner
 
             if (organizerEmail || adminEmail) {
-                sendBookingNotification(organizerEmail, adminEmail, bookingResult.booking, bookingResult.event);
+                sendBookingNotification(organizerEmail, adminEmail, bookingResult.booking, bookingResult.event)
+                    .then(success => {
+                        const log = `${new Date().toISOString()} - NOTIFICATION SUCCESS - Sent to Org: ${organizerEmail || 'N/A'}, Admin: ${adminEmail}\n`;
+                        console.log(log);
+                        fs.appendFileSync('email.log', log);
+                    })
+                    .catch(err => {
+                        const log = `${new Date().toISOString()} - NOTIFICATION FAIL - Org: ${organizerEmail}, Admin: ${adminEmail} - ${err}\n`;
+                        console.error("Notification email sending failed:", err);
+                        fs.appendFileSync('email.log', log);
+                    });
             }
         });
 

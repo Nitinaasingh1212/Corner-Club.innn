@@ -113,9 +113,9 @@ export function EventCard({ event }: EventCardProps) {
                 <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
                     <div className="flex items-center gap-2">
                         <div className="relative h-6 w-6 overflow-hidden rounded-full border border-zinc-200">
-                            <img src={event.creator.avatar} alt={event.creator.name} className="h-full w-full object-cover" />
+                            <img src={event.creator?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous"} alt={event.creator?.name || "Organizer"} className="h-full w-full object-cover" />
                         </div>
-                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 truncate max-w-[100px]">{event.creator.name}</span>
+                        <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400 truncate max-w-[100px]">{event.creator?.name || "Organizer"}</span>
                     </div>
 
                     <div className="flex items-center gap-1 rounded-full bg-white border border-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
