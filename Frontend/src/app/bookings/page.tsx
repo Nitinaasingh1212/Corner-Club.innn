@@ -5,30 +5,52 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getUserBookings } from "@/lib/firestore";
 import Link from "next/link";
+import Image from "next/image";
 import { Calendar, MapPin, Ticket } from "lucide-react";
 
 export default function BookingsPage() {
     const { user, loading: authLoading } = useAuth();
     const [bookings, setBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [fetchingMore, setFetchingMore] = useState(false);
 
     useEffect(() => {
+        if (!user && !authLoading) {
+            setLoading(false);
+            return;
+        }
+
         async function fetchBookings() {
             if (user) {
                 try {
                     const data = await getUserBookings(user.uid);
                     setBookings(data);
+                    if (data.length < 50) setHasMore(false);
                 } catch (error) {
                     console.error("Failed to fetch bookings:", error);
                 } finally {
                     setLoading(false);
                 }
-            } else if (!authLoading) {
-                setLoading(false);
             }
         }
         fetchBookings();
     }, [user, authLoading]);
+
+    const loadMore = async () => {
+        if (!user || !hasMore || fetchingMore) return;
+        setFetchingMore(true);
+        try {
+            const lastBooking = bookings[bookings.length - 1];
+            const data = await getUserBookings(user.uid, lastBooking.bookedAt, lastBooking.id);
+            setBookings(prev => [...prev, ...data]);
+            if (data.length < 50) setHasMore(false);
+        } catch (error) {
+            console.error("Failed to load more bookings:", error);
+        } finally {
+            setFetchingMore(false);
+        }
+    };
 
     if (authLoading || loading) {
         return (
@@ -59,10 +81,12 @@ export default function BookingsPage() {
                             {booking.event ? (
                                 <>
                                     <div className="relative h-48 w-full">
-                                        <img
+                                        <Image
                                             src={booking.event.image}
                                             alt={booking.event.title}
-                                            className="h-full w-full object-cover"
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         />
                                         <div className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-zinc-900 backdrop-blur-sm">
                                             {booking.status.toUpperCase()}
@@ -114,6 +138,19 @@ export default function BookingsPage() {
                     </div>
                 )}
             </div>
+
+            {hasMore && bookings.length > 0 && (
+                <div className="mt-12 flex justify-center pb-8">
+                    <button
+                        onClick={loadMore}
+                        disabled={fetchingMore}
+                        className="rounded-full border border-zinc-200 bg-white px-8 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 disabled:opacity-50"
+                    >
+                        {fetchingMore ? "Loading..." : "Load More Tickets"}
+                    </button>
+                </div>
+            )}
         </div>
+
     );
 }

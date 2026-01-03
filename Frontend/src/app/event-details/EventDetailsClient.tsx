@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getEventById, bookEvent, toggleFavoriteEvent, isEventFavorited, getEventAttendees, getUserProfile, getUserBookings } from "@/lib/firestore";
 import { Button } from "@/app/components/ui/Button";
 import { MapPin, Calendar, Clock, Users, ArrowLeft, Share2, Heart, CheckCircle, Phone, Youtube, Facebook, Instagram, Image as ImageIcon, Lock } from "lucide-react";
-import { Event } from "@/data/mockData";
+import { Event } from "@/types";
 import EventChat from "@/app/components/EventChat";
 
 export default function EventDetailsClient({ id }: { id: string | null }) {

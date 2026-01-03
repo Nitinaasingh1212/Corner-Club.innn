@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "./firebase"; // Still needed for auth? No, auth is separate. But db export might be used elsewhere? 
 // Actually, we should remove direct firestore usage.
-import { Event } from "@/data/mockData";
+import { Event } from "@/types";
 
 // Use relative URL to leverage Next.js rewrites (works in dev and prod)
 // Use relative URL for client-side (Next.js rewrites) and absolute URL for server-side (static generation/ISR)
@@ -87,8 +87,12 @@ export async function bookEvent(eventId: string, userId: string, userDetails: an
     return true;
 }
 
-export async function getUserBookings(userId: string) {
-    const res = await fetch(`${API_URL}/users/${userId}/bookings`);
+export async function getUserBookings(userId: string, lastBookedAt?: string, lastId?: string) {
+    const params = new URLSearchParams();
+    if (lastBookedAt) params.append("lastBookedAt", lastBookedAt);
+    if (lastId) params.append("lastId", lastId);
+
+    const res = await fetch(`${API_URL}/users/${userId}/bookings?${params.toString()}`);
     if (!res.ok) throw new Error("Failed to fetch bookings");
     return res.json();
 }

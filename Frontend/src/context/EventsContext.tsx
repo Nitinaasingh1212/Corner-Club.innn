@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getEventsOrderedByDate } from "@/lib/firestore";
-import { Event } from "@/data/mockData"; // keep type definition
+import { Event } from "@/types"; // keep type definition
 
 interface EventsContextType {
     events: Event[];

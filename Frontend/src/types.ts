@@ -19,5 +19,3 @@ export interface Event {
     isSaved?: boolean;
     status?: string;
 }
-
-// MOCK_EVENTS removed. Please use real data.

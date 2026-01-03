@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Calendar, MapPin, Users, Heart, Share2 } from "lucide-react";
 import Link from "next/link";
-import { type Event } from "@/data/mockData";
+import { type Event } from "@/types";
 import { Button } from "@/app/components/ui/Button";
 import { toggleFavoriteEvent, isEventFavorited } from "@/lib/firestore";
 import { useAuth } from "@/context/AuthContext";
