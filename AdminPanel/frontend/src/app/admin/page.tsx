@@ -113,48 +113,45 @@ export default function AdminPage() {
                                 </div>
 
                                 <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100 relative">
-                                    <div className="aspect-[4/3] w-full overflow-hidden bg-zinc-100 relative">
-                                        <Image
-                                            src={event.image}
-                                            alt={event.title}
-                                            fill
-                                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
-                                        <div className="absolute bottom-3 left-4 text-white">
-                                            <p className="font-semibold text-lg">{new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-1 flex-col p-5">
-                                        <div className="mb-4">
-                                            <h3 className="line-clamp-1 text-lg font-bold text-zinc-900 dark:text-white">{event.title}</h3>
-                                            <p className="text-sm text-zinc-500">{event.location}, {event.city}</p>
-                                        </div>
-
-                                        <div className="mb-6 flex-1">
-                                            <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{event.description}</p>
-                                        </div>
-
-                                        <div className="flex gap-3 mt-auto">
-                                            <Button
-                                                onClick={() => handleApprove(event.id)}
-                                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm hover:shadow-emerald-500/20 transition-all"
-                                            >
-                                                Approve
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                onClick={() => handleReject(event.id)}
-                                                className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/10"
-                                            >
-                                                Reject
-                                            </Button>
-                                        </div>
+                                    <Image
+                                        src={event.image}
+                                        alt={event.title}
+                                        fill
+                                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
+                                    <div className="absolute bottom-3 left-4 text-white">
+                                        <p className="font-semibold text-lg">{new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</p>
                                     </div>
                                 </div>
-                        ))}
+
+                                <div className="flex flex-1 flex-col p-5">
+                                    <div className="mb-4">
+                                        <h3 className="line-clamp-1 text-lg font-bold text-zinc-900 dark:text-white">{event.title}</h3>
+                                        <p className="text-sm text-zinc-500">{event.location}, {event.city}</p>
+                                    </div>
+
+                                    <div className="mb-6 flex-1">
+                                        <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{event.description}</p>
+                                    </div>
+
+                                    <div className="flex gap-3 mt-auto">
+                                        <Button
+                                            onClick={() => handleApprove(event.id)}
+                                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm hover:shadow-emerald-500/20 transition-all"
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => handleReject(event.id)}
+                                            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 dark:border-red-900/30 dark:text-red-400 dark:hover:bg-red-900/10"
+                                        >
+                                            Reject
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
