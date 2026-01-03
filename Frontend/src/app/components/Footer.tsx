@@ -25,7 +25,7 @@ export function Footer() {
                         <Link href="/contact" className="hover:text-black dark:hover:text-white">Contact</Link>
                     </div>
                     <p className="text-sm text-zinc-500">
-                        &copy; {new Date().getFullYear()} Corner Club. All rights reserved.
+                        &copy; <span suppressHydrationWarning>{new Date().getFullYear()}</span> Corner Club. All rights reserved.
                     </p>
                     <div className="flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${backendStatus.includes("success") ? "bg-green-500" : "bg-red-500"}`}></span>
