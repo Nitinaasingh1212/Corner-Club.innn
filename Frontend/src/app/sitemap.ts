@@ -4,7 +4,7 @@ import { getEventsForSitemap } from '@/lib/firestore';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Base URL
-    const baseUrl = 'http://localhost:3000'; // TODO: Update with production URL
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://corner-club-innn.vercel.app';
 
     // Static routes
     const routes = [

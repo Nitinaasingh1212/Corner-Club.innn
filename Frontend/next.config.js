@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     // output: "export", // Disabled to allow proxy rewrites
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
+    // eslint config removed (handled in package.json or separate config)
     typescript: {
         ignoreBuildErrors: true,
     },
