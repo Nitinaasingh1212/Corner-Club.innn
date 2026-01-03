@@ -13,30 +13,35 @@ interface HeaderProps {
 export function Header({ onCreateClick }: HeaderProps) {
     const { user, loading, signInWithGoogle, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [userProfile, setUserProfile] = useState<any>(null);
+    // const [userProfile, setUserProfile] = useState<any>(null); // Removed stale state
     const router = useRouter();
 
-    useEffect(() => {
-        if (user) {
-            getUserProfile(user.uid).then(setUserProfile).catch(console.error);
-        } else {
-            setUserProfile(null);
-        }
-    }, [user]);
+    // Removed useEffect that caused stale data
 
-    const handleHostEventClick = () => {
+    const handleHostEventClick = async () => {
         if (!user) {
             signInWithGoogle();
             return;
         }
 
-        if (!userProfile?.phone) {
-            alert("Please add your phone number to your profile before hosting an event.");
-            router.push("/profile");
-            return;
-        }
+        try {
+            // Fetch fresh profile data on every click
+            const profile = await getUserProfile(user.uid);
 
-        onCreateClick?.();
+            if (!profile || !profile.phone) {
+                // Use a more subtle toast in strict production, but alert works for now
+                if (confirm("You need to complete your profile (add phone number) to host events. Go to Profile?")) {
+                    router.push("/profile");
+                }
+                return;
+            }
+
+            onCreateClick?.();
+        } catch (error) {
+            console.error("Failed to check profile:", error);
+            // On error, let them try (fallback to modal validation)
+            onCreateClick?.();
+        }
     };
 
     return (
