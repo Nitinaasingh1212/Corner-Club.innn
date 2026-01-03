@@ -46,6 +46,17 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     //     }
     // }, [user]);
 
+    // Load user profile to pre-fill phone
+    useEffect(() => {
+        if (user && isOpen) {
+            getUserProfile(user.uid).then(profile => {
+                if (profile?.phone) {
+                    setFormData(prev => ({ ...prev, organizerPhone: profile.phone }));
+                }
+            });
+        }
+    }, [user, isOpen]);
+
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -65,30 +76,47 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!user) return;
+
+        // Final validation for phone
+        if (!formData.organizerPhone) {
+            alert("Phone number is required to host an event.");
+            return;
+        }
+
+        setLoading(true);
         console.log("Submitting form with data:", formData);
 
         const newEvent = {
-            id: Math.random().toString(36).substr(2, 9),
-            ...formData,
-            category: formData.category as any,
+            id: crypto.randomUUID(), // Changed to crypto.randomUUID()
+            title: formData.title,
+            date: formData.date,
+            time: formData.time,
+            location: formData.location,
+            city: formData.city,
             price: Number(formData.price) || 0,
-            capacity: Number(formData.capacity) || 0,
-            currency: "INR",
+            image: previewImage || "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80&w=1000", // Changed default image
+            category: formData.category as any,
+            description: formData.description,
+            organizer: formData.organizerName || user.displayName || "Anonymous", // Changed to 'organizer'
             attendees: 0,
-            image: previewImage || "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=1000",
+            isSaved: false, // Default
             creator: {
-                name: formData.organizerName || user?.displayName || "Anonymous",
-                avatar: user?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous",
-                phone: formData.organizerPhone,
-                social: {
-                    instagram: formData.socialInstagram,
-                    facebook: formData.socialFacebook,
-                    youtube: formData.socialYoutube
-                }
+                name: user.displayName || "Anonymous",
+                avatar: user.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix", // Changed default avatar seed
             },
-            creatorId: user?.uid,
-            isSaved: false,
-            address: formData.address // Ensure address is top level for map
+            creatorId: user.uid,
+            createdAt: new Date().toISOString(), // Added createdAt
+            status: 'pending', // Added status
+            phone: formData.organizerPhone, // Store phone in event too
+            address: formData.address, // Ensure address is top level for map
+            capacity: Number(formData.capacity) || 0, // Added capacity
+            currency: "INR", // Added currency
+            social: { // Added social links
+                instagram: formData.socialInstagram,
+                facebook: formData.socialFacebook,
+                youtube: formData.socialYoutube
+            }
         };
 
         try {
@@ -113,7 +141,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                 socialYoutube: ""
             });
             setPreviewImage(null);
-            alert("Event successfully submitted! It will be visible after Admin approval.");
+            alert("Event submitted for approval!"); // Changed alert message
         } catch (error: any) {
             console.error("Error creating event:", error);
             alert(`Database Error:\n${error.message}\n\nPlease take a screenshot of this message.`);
@@ -242,6 +270,27 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         />
                                     </div>
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                        Contact Phone (Required)
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        required
+                                        value={formData.organizerPhone}
+                                        onChange={(e) => setFormData({ ...formData, organizerPhone: e.target.value })}
+                                        className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-[#f98109] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+                                        placeholder="+91 98765 43210"
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="mt-4 flex w-full justify-center rounded-md border border-transparent bg-[#f98109] px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-[#e67300] focus:outline-none focus:ring-2 focus:ring-[#f98109] focus:ring-offset-2 disabled:opacity-50"
+                                >
+                                    {loading ? "Submitting..." : "Submit Event"}
+                                </button>
                                 <div>
                                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">Full Address (for Map)</label>
                                     <input

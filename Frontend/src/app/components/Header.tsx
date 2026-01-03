@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Button } from "@/app/components/ui/Button";
 import { Plus, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getUserProfile } from "@/lib/firestore";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
     onCreateClick?: () => void;
@@ -11,6 +13,31 @@ interface HeaderProps {
 export function Header({ onCreateClick }: HeaderProps) {
     const { user, loading, signInWithGoogle, logout } = useAuth();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [userProfile, setUserProfile] = useState<any>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (user) {
+            getUserProfile(user.uid).then(setUserProfile).catch(console.error);
+        } else {
+            setUserProfile(null);
+        }
+    }, [user]);
+
+    const handleHostEventClick = () => {
+        if (!user) {
+            signInWithGoogle();
+            return;
+        }
+
+        if (!userProfile?.phone) {
+            alert("Please add your phone number to your profile before hosting an event.");
+            router.push("/profile");
+            return;
+        }
+
+        onCreateClick?.();
+    };
 
     return (
         <header className="sticky top-0 z-[100] w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-black/80">
@@ -50,13 +77,7 @@ export function Header({ onCreateClick }: HeaderProps) {
                         <Button variant="ghost" size="sm" onClick={signInWithGoogle}>Login</Button>
                     )}
 
-                    <Button size="sm" className="hidden sm:flex gap-2" onClick={() => {
-                        if (!user) {
-                            signInWithGoogle();
-                            return;
-                        }
-                        onCreateClick?.();
-                    }}>
+                    <Button size="sm" className="hidden sm:flex gap-2" onClick={handleHostEventClick}>
                         <Plus className="h-4 w-4" />
                         <span>Host Event</span>
                     </Button>
@@ -113,11 +134,7 @@ export function Header({ onCreateClick }: HeaderProps) {
                             className="w-full justify-center gap-2"
                             onClick={() => {
                                 setIsMobileMenuOpen(false);
-                                if (!user) {
-                                    signInWithGoogle();
-                                    return;
-                                }
-                                onCreateClick?.();
+                                handleHostEventClick();
                             }}
                         >
                             <Plus className="h-4 w-4" />
