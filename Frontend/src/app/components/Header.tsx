@@ -47,7 +47,11 @@ export function Header({ onCreateClick }: HeaderProps) {
                             />
                         </Link>
                     ) : (
-                        <Button variant="ghost" size="sm" onClick={signInWithGoogle}>Login</Button>
+                        <Button variant="ghost" size="sm" onClick={() => {
+                            alert("Login Clicked! If you see this, the button works.");
+                            console.log("Login button clicked");
+                            signInWithGoogle().catch(e => alert("Auth Error: " + e.message));
+                        }}>Login</Button>
                     )}
 
                     <Button size="sm" className="hidden sm:flex gap-2" onClick={() => {
