@@ -11,8 +11,12 @@ export function Hero() {
                     Book your tickets and instantly join exclusive chat rooms to connect with other attendees before the event even starts.
                 </p>
                 <div className="mt-10 flex justify-center gap-4">
-                    <Button size="lg">Explore Events</Button>
-                    <Button variant="outline" size="lg">How it works</Button>
+                    <Button size="lg" onClick={() => window.scrollTo({ top: 800, behavior: 'smooth' })}>
+                        Explore Events
+                    </Button>
+                    <a href="/about">
+                        <Button variant="outline" size="lg">How it works</Button>
+                    </a>
                 </div>
             </div>
         </section>
