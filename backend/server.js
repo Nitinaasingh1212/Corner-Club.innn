@@ -330,7 +330,7 @@ app.post('/api/bookings', async (req, res) => {
         res.status(400).json({ error: error.toString() });
     }
 });
-});
+
 
 // Get attendees for an event (Organizer/Admin only)
 app.get('/api/events/:eventId/bookings', async (req, res) => {
@@ -366,15 +366,29 @@ app.get('/api/events/:eventId/bookings', async (req, res) => {
 app.get('/api/users/:userId/bookings', async (req, res) => {
     try {
         const { userId } = req.params;
+        const { limit: limitParam, lastBookedAt, lastId } = req.query;
+        const limitVal = parseInt(limitParam) || 50;
+
         const bookingsRef = collection(db, "bookings");
-        const q = query(bookingsRef, where("userId", "==", userId));
+
+        const constraints = [
+            where("userId", "==", userId),
+            orderBy("bookedAt", "desc"),
+            orderBy("__name__", "desc")
+        ];
+
+        if (lastBookedAt && lastId) {
+            constraints.push(startAfter(lastBookedAt, lastId));
+        }
+
+        constraints.push(limit(limitVal));
+
+        const q = query(bookingsRef, ...constraints);
         const snapshot = await getDocs(q);
 
         const bookings = await Promise.all(snapshot.docs.map(async (docSnap) => {
             const bookingData = docSnap.data();
             // Fetch event details for each booking
-            // We can reuse the logic or call our own internal function. 
-            // For now, let's just do a direct fetch here to keep it self-contained in this request handler.
             const eventRef = doc(db, "events", bookingData.eventId);
             const eventSnap = await getDoc(eventRef);
             const eventData = eventSnap.exists() ? { id: eventSnap.id, ...eventSnap.data() } : null;

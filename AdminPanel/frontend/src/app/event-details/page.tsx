@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getEventById, bookEvent, toggleFavoriteEvent, isEventFavorited } from "@/lib/firestore";
 import { Button } from "@/app/components/ui/Button";
 import { MapPin, Calendar, Clock, Users, ArrowLeft, Share2, Heart } from "lucide-react";
-import { Event } from "@/data/mockData";
+import { Event } from "@/types";
 
 import { Suspense } from "react";
 
