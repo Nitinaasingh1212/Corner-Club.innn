@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 import { getEventsOrderedByDate } from "@/lib/firestore";
 import { Event } from "@/types"; // keep type definition
 
@@ -22,15 +22,34 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     const [hasMore, setHasMore] = useState(true);
     const [filters, setFilters] = useState({ city: "All", category: "All" });
 
-    // Helper to fetch events
-    const fetchEventsList = async (isLoadMore: boolean = false, city: string = "All", category: string = "All") => {
+    // Refs to break dependency cycles in useCallback
+    const eventsRef = useRef<Event[]>([]);
+    const hasMoreRef = useRef(true);
+    const filtersRef = useRef({ city: "All", category: "All" });
+
+    // Sync refs with state
+    useEffect(() => {
+        eventsRef.current = events;
+    }, [events]);
+
+    useEffect(() => {
+        hasMoreRef.current = hasMore;
+    }, [hasMore]);
+
+    useEffect(() => {
+        filtersRef.current = filters;
+    }, [filters]);
+
+
+    // Helper to fetch events - Stable Identity
+    const fetchEventsList = useCallback(async (isLoadMore: boolean = false, city: string = "All", category: string = "All") => {
         setLoading(true);
         try {
             let lastDate = undefined;
             let lastId = undefined;
 
-            if (isLoadMore && events.length > 0) {
-                const lastEvent = events[events.length - 1];
+            if (isLoadMore && eventsRef.current.length > 0) {
+                const lastEvent = eventsRef.current[eventsRef.current.length - 1];
                 lastDate = lastEvent.date;
                 lastId = lastEvent.id;
             }
@@ -39,8 +58,10 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
             if (newEvents.length < 50) {
                 setHasMore(false);
+                hasMoreRef.current = false;
             } else {
                 setHasMore(true);
+                hasMoreRef.current = true;
             }
 
             if (isLoadMore) {
@@ -53,43 +74,35 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, []); // No dependencies = Stable function identity
 
     // Initial load
     useEffect(() => {
-        // fetchEventsList(false, "All", "All"); 
-        // We can let the component trigger the first fetch via refetch if we want, or do it here.
-        // Let's do it here to ensure data on mount, but page.tsx might override.
-        // Actually page.tsx has local state 'Lucknow'/'All'. 
-        // It's better if page.tsx calls refetch on mount with its defaults.
-        // But if we leave it empty here, context is empty initially.
-        // Let's fetch default "All"/"All" here (or "Lucknow" if that's the desired default? 
-        // The mock local state in page.tsx was "Lucknow".
-        // Let's hold off auto-fetch here if we want page.tsx to drive it.
-        // Or better: default to fetching All/All and let page.tsx refine it.
-        // existing: fetches all.
-        // I will trigger a default fetch here.
         fetchEventsList();
-    }, []);
+    }, [fetchEventsList]);
 
-    const loadMore = async () => {
-        if (!hasMore || loading) return;
-        await fetchEventsList(true, filters.city, filters.category);
-    };
+    const loadMore = useCallback(async () => {
+        if (!hasMoreRef.current || loading) return;
+        // Use ref values for filters to avoid dependency on state
+        await fetchEventsList(true, filtersRef.current.city, filtersRef.current.category);
+    }, [fetchEventsList, loading]); // loading is primitive, safe enough, but ideally we use ref for loading too if it changes fast. 
+    // Actually, loading changes frequently. But loadMore is attached to button, not useEffect. So it's fine if it changes.
 
-    const refetch = async (city: string, category: string) => {
-        setFilters({ city, category });
-        setHasMore(true); // Reset hasMore on new filter
+    // CRITICAL: refetch must be stable for page.tsx useEffect
+    const refetch = useCallback(async (city: string, category: string) => {
+        setFilters({ city, category }); // State update
+        filtersRef.current = { city, category }; // Ref update immediately for the fetch below
+
+        setHasMore(true);
+        hasMoreRef.current = true;
+
         await fetchEventsList(false, city, category);
-    };
+    }, [fetchEventsList]);
 
     const addEvent = async (event: Event) => {
-        // Do NOT optimistic update, because event needs approval.
-        // setEvents((prev) => [event, ...prev]); 
         try {
             const { createEvent } = await import("@/lib/firestore");
             await createEvent(event);
-            // Optionally fetch events again? No, user needs to wait for approval.
         } catch (error: any) {
             console.error("Failed to save event to Firestore:", error);
             alert(`Error saving event: ${error.message}`);
