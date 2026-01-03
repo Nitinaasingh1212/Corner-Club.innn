@@ -146,7 +146,7 @@ export default function BookingsPage() {
                         disabled={fetchingMore}
                         className="rounded-full border border-zinc-200 bg-white px-8 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800 disabled:opacity-50"
                     >
-                        {fetchingMore ? "Loading..." : "Load More Tickets"}
+                        "Load More Tickets"
                     </button>
                 </div>
             )}
