@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { X, Upload, MapPin } from "lucide-react";
 import { Button } from "@/app/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ interface CreateEventModalProps {
 export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     const { addEvent } = useEvents();
     const { user } = useAuth(); // Get logged in user
+    const router = useRouter();
     const [loading, setLoading] = useState(false);
 
     // ... imports
@@ -53,7 +55,11 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
     useEffect(() => {
         if (user && isOpen) {
             getUserProfile(user.uid).then(profile => {
-                if (profile?.phone) {
+                if (!profile || !profile.name || !profile.email || !profile.phone) {
+                    alert("You must complete your profile (Name, Email, Phone) before hosting an event.");
+                    onClose();
+                    router.push("/profile");
+                } else if (profile.phone) {
                     setFormData(prev => ({ ...prev, organizerPhone: profile.phone }));
                 }
             });

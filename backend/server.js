@@ -449,6 +449,41 @@ app.get('/api/users/:userId/hosted-events', async (req, res) => {
 
 // --- User & Organiser API ---
 
+// Get User Profile
+app.get('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userDoc = await getDoc(doc(db, "users", id));
+        if (userDoc.exists()) {
+            res.json(userDoc.data());
+        } else {
+            // Return null or 404? Frontend expects null sometimes or just empty. 
+            // Better to return 200 with null to handle "not created yet" gracefully in frontend
+            res.json(null);
+        }
+    } catch (error) {
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ error: "Failed to fetch profile" });
+    }
+});
+
+// Update/Create User Profile
+app.post('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const profileData = req.body;
+
+        // Remove undefined fields to avoid Firestore errors
+        const cleanData = JSON.parse(JSON.stringify(profileData));
+
+        await setDoc(doc(db, "users", id), cleanData, { merge: true });
+        res.json({ success: true, message: "Profile updated" });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ error: "Failed to update profile" });
+    }
+});
+
 // Get Event Attendees (Organizer Only)
 
 
