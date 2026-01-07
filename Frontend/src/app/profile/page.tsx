@@ -55,7 +55,18 @@ export default function ProfilePage() {
                 getUserProfile(user.uid).then(data => {
                     if (data) {
                         if (data.portfolio) setPortfolio(data.portfolio);
-                        setProfileData(data);
+                        // Initialize with DB data, or fallback to Auth data
+                        setProfileData({
+                            ...data,
+                            name: data.name || user.displayName || "",
+                            email: data.email || user.email || ""
+                        });
+                    } else {
+                        // First time load
+                        setProfileData({
+                            name: user.displayName || "",
+                            email: user.email || ""
+                        });
                     }
                 }).catch(console.error);
             }
@@ -67,6 +78,13 @@ export default function ProfilePage() {
         if (!user) return;
         setSavingProfile(true);
         try {
+            // Enforce basic validation
+            if (!profileData.name || !profileData.phone || !profileData.email) {
+                alert("Name, Email, and Phone are required.");
+                setSavingProfile(false);
+                return;
+            }
+
             await updateUserProfile(user.uid, profileData);
             alert("Profile updated successfully!");
         } catch (error) {
@@ -129,9 +147,9 @@ export default function ProfilePage() {
                             />
                             <div className="text-center sm:text-left">
                                 <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-                                    {user.displayName || "Community Member"}
+                                    {profileData.name || user.displayName || "Community Member"}
                                 </h1>
-                                <p className="text-zinc-500">{user.email}</p>
+                                <p className="text-zinc-500">{profileData.email || user.email}</p>
                             </div>
                         </div>
                         <div className="flex gap-3">
@@ -146,12 +164,32 @@ export default function ProfilePage() {
                         <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Edit Profile</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Phone Number</label>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Full Name (Required)</label>
+                                <input
+                                    type="text"
+                                    value={profileData.name || ""}
+                                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Email (Required)</label>
+                                <input
+                                    type="email"
+                                    value={profileData.email || ""}
+                                    onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                                    placeholder="john@example.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Phone Number (Required)</label>
                                 <input
                                     type="text"
                                     value={profileData.phone || ""}
                                     onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     placeholder="+1 234 567 890"
                                 />
                             </div>
@@ -161,7 +199,7 @@ export default function ProfilePage() {
                                     type="text"
                                     value={profileData.city || ""}
                                     onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
-                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     placeholder="New York, NY"
                                 />
                             </div>
@@ -170,7 +208,7 @@ export default function ProfilePage() {
                                 <textarea
                                     value={profileData.bio || ""}
                                     onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                    className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     rows={3}
                                     placeholder="Tell us about yourself..."
                                 />
@@ -214,7 +252,7 @@ export default function ProfilePage() {
                             value={newImage}
                             onChange={(e) => setNewImage(e.target.value)}
                             placeholder="Enter Image URL (e.g. from Unsplash)..."
-                            className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+                            className="flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                         />
                         <Button onClick={handleAddImage} disabled={updatingPortfolio || !newImage.trim()}>
                             {updatingPortfolio ? "Saving..." : <><Plus className="h-4 w-4 mr-1" /> Add</>}

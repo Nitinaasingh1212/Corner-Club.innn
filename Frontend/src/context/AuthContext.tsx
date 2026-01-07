@@ -56,7 +56,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const provider = new GoogleAuthProvider();
         try {
             await signInWithPopup(auth, provider);
-        } catch (error) {
+        } catch (error: any) {
+            // Ignore popup closed by user or duplicate request
+            if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+                console.warn("Login popup closed or cancelled.");
+                return;
+            }
             console.error("Error signing in with Google:", error);
             throw error;
         }

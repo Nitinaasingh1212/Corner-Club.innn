@@ -56,8 +56,14 @@ const sendConfirmationEmail = async (toEmail, bookingDetails, eventDetails) => {
                         <p><strong>Date:</strong> ${new Date(eventDetails.date).toDateString()}</p>
                         <p><strong>Time:</strong> ${eventDetails.time}</p>
                         <p><strong>Location:</strong> ${eventDetails.location}, ${eventDetails.city}</p>
+                        <p><strong>Address:</strong> ${eventDetails.address || 'Check event page'}</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;" />
+                        <p><strong>Seats:</strong> ${bookingDetails.seatNumbers ? bookingDetails.seatNumbers.join(", ") : "General Admission"}</p>
                         <p><strong>Quantity:</strong> ${bookingDetails.quantity}</p>
                         <p><strong>Total Paid:</strong> ₹${bookingDetails.totalPrice}</p>
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;" />
+                        <p><strong>Organizer:</strong> ${eventDetails.organizer}</p>
+                        <p><strong>Contact:</strong> ${eventDetails.phone || 'N/A'}</p>
                     </div>
 
                     <div style="text-align: center; margin: 30px 0;">

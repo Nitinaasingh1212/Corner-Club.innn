@@ -386,22 +386,11 @@ app.get('/api/users/:userId/bookings', async (req, res) => {
 
         const bookingsRef = collection(db, "bookings");
 
-        const constraints = [
-            where("userId", "==", userId),
-            orderBy("bookedAt", "desc"),
-            orderBy("__name__", "desc")
-        ];
-
-        if (lastBookedAt && lastId) {
-            constraints.push(startAfter(lastBookedAt, lastId));
-        }
-
-        constraints.push(limit(limitVal));
-
-        const q = query(bookingsRef, ...constraints);
+        // allow querying without index by removing orderBy
+        const q = query(bookingsRef, where("userId", "==", userId));
         const snapshot = await getDocs(q);
 
-        const bookings = await Promise.all(snapshot.docs.map(async (docSnap) => {
+        let bookings = await Promise.all(snapshot.docs.map(async (docSnap) => {
             const bookingData = docSnap.data();
             // Fetch event details for each booking
             const eventRef = doc(db, "events", bookingData.eventId);
@@ -414,6 +403,13 @@ app.get('/api/users/:userId/bookings', async (req, res) => {
                 event: eventData
             };
         }));
+
+        // Sort in memory (Newest First)
+        bookings.sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt));
+
+        // Apply pagination limit manually if needed (optional, just returning all for now as list is small)
+        // const limitVal = parseInt(limitParam) || 50;
+        // bookings = bookings.slice(0, limitVal);
 
         res.json(bookings);
     } catch (error) {

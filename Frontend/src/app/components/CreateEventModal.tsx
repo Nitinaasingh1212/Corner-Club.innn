@@ -93,6 +93,12 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
             return;
         }
 
+        // Validate at least one social media link
+        if (!formData.socialInstagram && !formData.socialFacebook && !formData.socialYoutube) {
+            alert("Please provide at least one social media link (Instagram, Facebook, or YouTube) so attendees can check your work.");
+            return;
+        }
+
         setLoading(true);
         console.log("Submitting form with data:", formData);
 
@@ -204,7 +210,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     placeholder="e.g. Saturday Night Jam"
-                                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                    className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                 />
                             </div>
 
@@ -214,7 +220,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                     <select
                                         value={formData.city}
                                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     >
                                         <option>Lucknow</option>
                                         <option>Mumbai</option>
@@ -226,7 +232,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                     <select
                                         value={formData.category}
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     >
                                         <option>Music</option>
                                         <option>Food</option>
@@ -247,7 +253,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         required
                                         value={formData.date}
                                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
@@ -257,7 +263,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         required
                                         value={formData.time}
                                         onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -275,7 +281,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                             value={formData.location}
                                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                             placeholder="e.g. Phoenix Palassio"
-                                            className="h-10 w-full rounded-lg border border-zinc-300 pl-9 pr-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                            className="h-10 w-full rounded-lg border border-zinc-300 pl-9 pr-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -288,7 +294,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         required
                                         value={formData.organizerPhone}
                                         onChange={(e) => setFormData({ ...formData, organizerPhone: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-[#f98109] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-[#f98109] focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                         placeholder="+91 98765 43210"
                                     />
                                 </div>
@@ -308,7 +314,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                                         placeholder="e.g. Sector-7, Gomti Nagar Extension"
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -322,7 +328,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         type="text"
                                         value={formData.organizerName}
                                         onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
@@ -332,7 +338,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         value={formData.organizerPhone}
                                         onChange={(e) => setFormData({ ...formData, organizerPhone: e.target.value })}
                                         placeholder="+91..."
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -343,7 +349,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                             value={formData.socialInstagram}
                                             onChange={(e) => setFormData({ ...formData, socialInstagram: e.target.value })}
                                             placeholder="@username"
-                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                         />
                                     </div>
                                     <div>
@@ -353,7 +359,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                             value={formData.socialFacebook}
                                             onChange={(e) => setFormData({ ...formData, socialFacebook: e.target.value })}
                                             placeholder="facebook.com/..."
-                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                         />
                                     </div>
                                     <div>
@@ -363,7 +369,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                             value={formData.socialYoutube}
                                             onChange={(e) => setFormData({ ...formData, socialYoutube: e.target.value })}
                                             placeholder="youtube.com/..."
-                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+                                            className="mt-1 h-8 w-full rounded-lg border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -376,7 +382,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                     required
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                    className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     placeholder="Tell us about the event..."
                                 ></textarea>
                             </div>
@@ -389,7 +395,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         value={formData.capacity}
                                         onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                                         placeholder="50"
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                                 <div>
@@ -399,7 +405,7 @@ export function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
                                         value={formData.price}
                                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                         placeholder="0"
-                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800"
+                                        className="mt-1 h-10 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-[#f98109] focus:outline-none focus:ring-1 focus:ring-[#f98109] dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                                     />
                                 </div>
                             </div>

@@ -18,13 +18,22 @@ export function Header({ onCreateClick }: HeaderProps) {
 
     // Removed useEffect that caused stale data
 
+    const [isChecking, setIsChecking] = useState(false);
+
     const handleHostEventClick = async () => {
-        if (!user) {
-            signInWithGoogle();
-            return;
-        }
+        if (isChecking) return;
+        setIsChecking(true);
 
         try {
+            if (!user) {
+                await signInWithGoogle();
+                // Don't return here, if login succeeds we might want to continue or let the effect handle it?
+                // Actually, if login succeeds, the component might re-render. 
+                // Let's just stop checking for now.
+                setIsChecking(false);
+                return;
+            }
+
             // Fetch fresh profile data on every click
             const profile = await getUserProfile(user.uid);
 
@@ -33,6 +42,7 @@ export function Header({ onCreateClick }: HeaderProps) {
                 if (confirm("You need to complete your profile (add phone number) to host events. Go to Profile?")) {
                     router.push("/profile");
                 }
+                setIsChecking(false);
                 return;
             }
 
@@ -41,6 +51,8 @@ export function Header({ onCreateClick }: HeaderProps) {
             console.error("Failed to check profile:", error);
             // On error, let them try (fallback to modal validation)
             onCreateClick?.();
+        } finally {
+            setIsChecking(false);
         }
     };
 
@@ -82,9 +94,13 @@ export function Header({ onCreateClick }: HeaderProps) {
                         <Button variant="ghost" size="sm" onClick={signInWithGoogle}>Login</Button>
                     )}
 
-                    <Button size="sm" className="hidden sm:flex gap-2" onClick={handleHostEventClick}>
-                        <Plus className="h-4 w-4" />
-                        <span>Host Event</span>
+                    <Button size="sm" className="hidden sm:flex gap-2" onClick={handleHostEventClick} disabled={isChecking}>
+                        {isChecking ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                            <Plus className="h-4 w-4" />
+                        )}
+                        <span>{isChecking ? "Checking..." : "Host Event"}</span>
                     </Button>
 
                     {/* Mobile Menu Toggle */}

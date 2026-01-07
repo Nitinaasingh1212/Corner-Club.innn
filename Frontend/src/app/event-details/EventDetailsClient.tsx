@@ -13,6 +13,7 @@ import EventChat from "@/app/components/EventChat";
 
 export default function EventDetailsClient({ id }: { id: string | null }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user, signInWithGoogle } = useAuth();
     const [event, setEvent] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
@@ -68,6 +69,19 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
         }
     }, [user, event]);
 
+    // Handle scroll to chat
+    useEffect(() => {
+        if (!loading && searchParams?.get('action') === 'chat') {
+            const chatSection = document.getElementById('chat-section');
+            if (chatSection) {
+                // Small delay to ensure render
+                setTimeout(() => {
+                    chatSection.scrollIntoView({ behavior: 'smooth' });
+                }, 500);
+            }
+        }
+    }, [loading, searchParams]);
+
     const handleBookClick = async () => {
         if (!user) {
             try {
@@ -77,6 +91,19 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
             }
             return;
         }
+        // Check if profile is complete (Name, Email, Phone)
+        try {
+            const profile = await getUserProfile(user.uid);
+            if (!profile || !profile.name || !profile.email || !profile.phone) {
+                if (confirm("You must complete your profile (Name, Email, Phone) to book a ticket. Go to Profile?")) {
+                    router.push("/profile");
+                }
+                return;
+            }
+        } catch (error) {
+            console.error("Profile check failed:", error);
+        }
+
         setIsBookingModalOpen(true);
     };
 
@@ -108,11 +135,15 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
             }
             alert(`Booking for: ${user.email}\nSending request...`);
 
+            // Fetch latest profile again to ensure we have the most up-to-date data for the booking record
+            const userProfile = await getUserProfile(user.uid);
+
             await bookEvent(event.id, user.uid, {
                 uid: user.uid,
-                email: user.email,
-                name: user.displayName,
-                photoURL: user.photoURL
+                email: userProfile?.email || user.email,
+                name: userProfile?.name || user.displayName,
+                photoURL: user.photoURL,
+                phone: userProfile?.phone || "N/A"
             }, quantity);
 
             setIsBookingModalOpen(false);
@@ -185,7 +216,7 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
         avatar: event.creator?.avatar || creatorProfile?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=Anonymous",
         isVerified: true, // Always show verified badge as requested
         phone: event.creator?.phone || creatorProfile?.phone,
-        social: event.creator?.social || creatorProfile?.social || {},
+        social: event.social || event.creator?.social || creatorProfile?.social || {},
         portfolio: creatorProfile?.portfolio || [] // Array of image URLs
     };
 
@@ -347,7 +378,7 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
                         )}
 
                         {/* Chat Section */}
-                        <div>
+                        <div id="chat-section" className="scroll-mt-24">
                             <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
                                 Community Chat {canChat ? "" : <Lock className="h-4 w-4 text-zinc-400" />}
                             </h3>

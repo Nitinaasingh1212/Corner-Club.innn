@@ -150,7 +150,8 @@ export async function getEventAttendees(eventId: string) {
 
 // USER PROFILE & PORTFOLIO
 export async function getUserProfile(userId: string) {
-    const res = await fetch(`${API_URL}/users/${userId}`);
+    // Disable cache to ensure fresh data (Phone/Name updates) are reflected immediately
+    const res = await fetch(`${API_URL}/users/${userId}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch user profile");
     return res.json();
 }

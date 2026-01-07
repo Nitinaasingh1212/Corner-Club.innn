@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Calendar, MapPin, Users, Heart, Share2 } from "lucide-react";
+import { Calendar, MapPin, Users, Heart, Share2, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { type Event } from "@/types";
 import { Button } from "@/app/components/ui/Button";
@@ -127,6 +127,15 @@ export function EventCard({ event }: EventCardProps) {
                 <div className="mt-4 flex gap-2">
                     <Link href={`/event-details?id=${event.id}`} className="flex-1">
                         <Button className="w-full">Book Ticket</Button>
+                    </Link>
+                    <Link href={`/event-details?id=${event.id}&action=chat`}>
+                        <Button
+                            variant="outline"
+                            className="px-3 border-[#f98109] text-[#f98109] hover:bg-[#f98109] hover:text-white dark:border-[#f98109] dark:text-[#f98109] dark:hover:bg-[#f98109] dark:hover:text-white transition-colors"
+                            title="Join Chat"
+                        >
+                            <MessageCircle className="h-5 w-5" />
+                        </Button>
                     </Link>
                     <button
                         onClick={handleFavorite}
