@@ -273,27 +273,73 @@ app.post('/api/users/:id', async (req, res) => {
     }
 });
 
+const Razorpay = require('razorpay');
+
+// Initialize Razorpay
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// --- Payment API ---
+
+app.post('/api/create-order', async (req, res) => {
+    try {
+        const { amount, currency = 'INR', receipt } = req.body;
+
+        const options = {
+            amount: amount * 100, // Razorpay works in subunits (paise)
+            currency,
+            receipt,
+            payment_capture: 1
+        };
+
+        const order = await razorpay.orders.create(options);
+        res.json(order);
+    } catch (error) {
+        console.error("Razorpay Order Error:", error);
+        res.status(500).json({ error: "Failed to create payment order" });
+    }
+});
+
+app.post('/api/verify-payment', async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+        const crypto = require('crypto');
+        const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+        hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+        const generated_signature = hmac.digest('hex');
+
+        if (generated_signature === razorpay_signature) {
+            res.json({ success: true, message: "Payment verified" });
+        } else {
+            res.status(400).json({ error: "Invalid payment signature" });
+        }
+    } catch (error) {
+        console.error("Payment Verification Error:", error);
+        res.status(500).json({ error: "Verification failed" });
+    }
+});
+
 // --- Bookings API ---
 
 // Create a booking
 // Create a booking
 // Create a booking
 app.post('/api/bookings', async (req, res) => {
-    console.log("RECEIVED BOOKING REQUEST:", req.body); // DEBUG LOG
     try {
-        const { eventId, userId, userDetails, quantity } = req.body;
+        const { eventId, userId, userDetails, quantity, paymentDetails } = req.body;
         const { sendConfirmationEmail, sendBookingNotification } = require('./emailService');
 
         const bookingResult = await runTransaction(db, async (transaction) => {
+            // ... (keep existing eventRef logic)
             const eventRef = doc(db, "events", eventId);
             const eventDoc = await transaction.get(eventRef);
 
-            // If not found in active events, check pending (though normally you don't book pending events, 
-            // but for safety or draft flows)
-            let eventData, refToUse;
+            let eventData;
             if (eventDoc.exists()) {
                 eventData = eventDoc.data();
-                refToUse = eventRef;
             } else {
                 throw "Event does not exist!";
             }
@@ -318,8 +364,9 @@ app.post('/api/bookings', async (req, res) => {
                 userId,
                 user: userDetails,
                 quantity: quantity || 1,
-                seatNumbers, // Store assigned seats
+                seatNumbers,
                 totalPrice: (eventData.price || 0) * (quantity || 1),
+                paymentDetails: paymentDetails || null, // SAVE PAYMENT INFO
                 bookedAt: new Date().toISOString(),
                 status: "confirmed"
             };

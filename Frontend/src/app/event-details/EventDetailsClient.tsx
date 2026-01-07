@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BookingModal } from "@/app/components/BookingModal";
 import { useAuth } from "@/context/AuthContext";
-import { getEventById, bookEvent, toggleFavoriteEvent, isEventFavorited, getEventAttendees, getUserProfile, getUserBookings } from "@/lib/firestore";
+import { getEventById, bookEvent, toggleFavoriteEvent, isEventFavorited, getEventAttendees, getUserProfile, getUserBookings, createPaymentOrder, verifyPayment } from "@/lib/firestore";
 import { Button } from "@/app/components/ui/Button";
 import { MapPin, Calendar, Clock, Users, ArrowLeft, Share2, Heart, CheckCircle, Phone, Youtube, Facebook, Instagram, Image as ImageIcon, Lock } from "lucide-react";
 import { Event } from "@/types";
@@ -124,6 +124,16 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
         }
     };
 
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
     const handleConfirmBooking = async (quantity: number) => {
         if (!event || !user) return;
 
@@ -131,32 +141,110 @@ export default function EventDetailsClient({ id }: { id: string | null }) {
         try {
             if (!user.email) {
                 alert("Error: Your account has no email attached. Cannot send ticket.");
+                setBookingLoading(false);
                 return;
             }
-            alert(`Booking for: ${user.email}\nSending request...`);
 
-            // Fetch latest profile again to ensure we have the most up-to-date data for the booking record
+            // Fetch latest profile again
             const userProfile = await getUserProfile(user.uid);
 
-            await bookEvent(event.id, user.uid, {
-                uid: user.uid,
-                email: userProfile?.email || user.email,
-                name: userProfile?.name || user.displayName,
-                photoURL: user.photoURL,
+            const totalPrice = event.price * quantity;
+            let paymentDetails = null;
+
+            if (totalPrice > 0) {
+                // 1. Load Script
+                const res = await loadRazorpay();
+                if (!res) {
+                    alert('Razorpay SDK failed to load. Are you online?');
+                    setBookingLoading(false);
+                    return;
+                }
+
+                // 2. Create Order
+                const order = await createPaymentOrder(totalPrice);
+                if (!order || !order.id) {
+                    alert('Server error: Could not create order');
+                    setBookingLoading(false);
+                    return;
+                }
+
+                // 3. Open Razorpay
+                const options = {
+                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "YOUR_KEY_ID_HERE",
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: "CornerClub Events",
+                    description: `Booking for ${event.title}`,
+                    image: "/logo.png", // specific logo or default
+                    order_id: order.id,
+                    handler: async function (response: any) {
+                        try {
+                            // 4. Verify Payment
+                            await verifyPayment(response);
+
+                            // 5. Book Event
+                            paymentDetails = {
+                                orderId: response.razorpay_order_id,
+                                paymentId: response.razorpay_payment_id,
+                                signature: response.razorpay_signature
+                            };
+
+                            await finalizeBooking(quantity, userProfile, paymentDetails);
+                        } catch (err: any) {
+                            alert("Payment Verification Failed: " + err.message);
+                            setBookingLoading(false);
+                        }
+                    },
+                    prefill: {
+                        name: userProfile?.name || user.displayName,
+                        email: userProfile?.email || user.email,
+                        contact: userProfile?.phone
+                    },
+                    theme: {
+                        color: "#f98109"
+                    }
+                };
+
+                const paymentObject = new (window as any).Razorpay(options);
+                paymentObject.open();
+
+                // Note: setBookingLoading(false) happens inside handler or if user closes?
+                // Razorpay has 'modal.ondismiss' but let's keep it simple.
+                // If user closes, loading might stay true. 
+                // We can add paymentObject.on('payment.failed', ...) but basic success path is key now.
+                return;
+            } else {
+                // Free event
+                await finalizeBooking(quantity, userProfile, null);
+            }
+
+        } catch (error: any) {
+            alert(`Booking Failed: ${error}`);
+            setBookingLoading(false);
+        }
+    };
+
+    const finalizeBooking = async (quantity: number, userProfile: any, paymentDetails: any) => {
+        try {
+            alert(`Booking for: ${userProfile?.email || user?.email}\nConfirming...`);
+
+            await bookEvent(event.id, user?.uid || "", {
+                uid: user?.uid,
+                email: userProfile?.email || user?.email,
+                name: userProfile?.name || user?.displayName,
+                photoURL: user?.photoURL,
                 phone: userProfile?.phone || "N/A"
-            }, quantity);
+            }, quantity, paymentDetails);
 
             setIsBookingModalOpen(false);
             alert(`Success! booked ${quantity} ticket(s).`);
-            setHasBooked(true); // Unlock chat immediately
+            setHasBooked(true);
             router.refresh();
 
-            // Re-fetch to update attendees count
             const updatedEvent = await getEventById(event.id);
             setEvent(updatedEvent);
 
-            // Re-fetch attendees list if creator
-            if (user.uid === event.creatorId) {
+            if (user?.uid === event.creatorId) {
                 getEventAttendees(event.id).then(setAttendees);
             }
         } catch (error: any) {

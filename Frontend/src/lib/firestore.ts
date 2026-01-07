@@ -73,11 +73,11 @@ export async function getEventById(id: string) {
     return res.json();
 }
 
-export async function bookEvent(eventId: string, userId: string, userDetails: any, quantity: number = 1) {
+export async function bookEvent(eventId: string, userId: string, userDetails: any, quantity: number = 1, paymentDetails: any = null) {
     const res = await fetch(`${API_URL}/bookings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, userId, userDetails, quantity })
+        body: JSON.stringify({ eventId, userId, userDetails, quantity, paymentDetails })
     });
 
     if (!res.ok) {
@@ -189,6 +189,27 @@ export async function isEventFavorited(userId: string, eventId: string) {
 export async function getFavoriteEvents(userId: string) {
     const res = await fetch(`${API_URL}/users/${userId}/favorites`);
     if (!res.ok) throw new Error("Failed to fetch favorites");
+    return res.json();
+}
+
+// PAYMENT API
+export async function createPaymentOrder(amount: number) {
+    const res = await fetch(`${API_URL}/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, currency: "INR" })
+    });
+    if (!res.ok) throw new Error("Failed to create order");
+    return res.json();
+}
+
+export async function verifyPayment(data: any) {
+    const res = await fetch(`${API_URL}/verify-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error("Payment verification failed");
     return res.json();
 }
 
