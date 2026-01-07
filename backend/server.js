@@ -237,6 +237,42 @@ app.post('/api/admin/events/:id/reject', async (req, res) => {
     }
 });
 
+// --- User API ---
+app.get('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const docRef = doc(db, "users", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            res.json(docSnap.data());
+        } else {
+            // Return null or 404? 
+            // Better to return 200 with null so frontend can handle empty state gracefully
+            res.json(null);
+        }
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        res.status(500).json({ error: "Failed to fetch user" });
+    }
+});
+
+app.post('/api/users/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userData = req.body;
+        const docRef = doc(db, "users", id);
+
+        // Use setDoc with merge: true to handle both create and update
+        await setDoc(docRef, { ...userData, updatedAt: new Date().toISOString() }, { merge: true });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        res.status(500).json({ error: "Failed to update user" });
+    }
+});
+
 // --- Bookings API ---
 
 // Create a booking

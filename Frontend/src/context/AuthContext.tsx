@@ -8,8 +8,9 @@ import {
     onAuthStateChanged,
     User
 } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp } from "firebase/firestore"; // remove setDoc
 import { auth, db } from "@/lib/firebase";
+import { updateUserProfile } from "@/lib/firestore";
 
 interface AuthContextType {
     user: User | null;
@@ -32,19 +33,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (currentUser) {
                 // Determine if this is a new user or existing one by checking Firestore
                 // We always update 'lastLogin'
-                const userRef = doc(db, "users", currentUser.uid);
-
                 try {
-                    await setDoc(userRef, {
+                    // Use backend API to store user data (centralized logic)
+                    await updateUserProfile(currentUser.uid, {
                         uid: currentUser.uid,
                         email: currentUser.email,
                         displayName: currentUser.displayName,
                         photoURL: currentUser.photoURL,
-                        lastLogin: serverTimestamp(),
-                    }, { merge: true });
-                    console.log("User profile saved to Firestore 'users' collection!");
+                        // lastLogin: new Date().toISOString() // server handles timestamps potentially, or we pass it
+                    });
+                    console.log("User profile synced via Backend API");
                 } catch (error) {
-                    console.error("Error updating user profile in Firestore:", error);
+                    console.error("Error syncing user profile:", error);
                 }
             }
         });
